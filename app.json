@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "WeMove",
+    "slug": "wemove",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D1B2A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.wemove.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "WeMove uses your location to find nearby pickup points.",
+        "NSCameraUsageDescription": "WeMove uses the camera to capture your ID and selfie for verification."
+      }
+    },
+    "android": {
+      "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#0D1B2A" },
+      "package": "com.wemove.app",
+      "permissions": ["ACCESS_FINE_LOCATION", "CAMERA"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-camera",
+      ["expo-location", { "locationAlwaysAndWhenInUsePermission": "Allow WeMove to use your location." }]
+    ],
+    "scheme": "wemove"
+  }
+}
