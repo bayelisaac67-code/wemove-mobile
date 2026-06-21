@@ -20,14 +20,26 @@
       }
     },
     "android": {
-      "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#0D1B2A" },
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D1B2A"
+      },
       "package": "com.wemove.app",
-      "permissions": ["ACCESS_FINE_LOCATION", "CAMERA"]
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "CAMERA"
+      ]
     },
     "plugins": [
       "expo-router",
       "expo-camera",
-      ["expo-location", { "locationAlwaysAndWhenInUsePermission": "Allow WeMove to use your location." }]
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow WeMove to use your location."
+        }
+      ],
+      "expo-secure-store"
     ],
     "scheme": "wemove"
   }

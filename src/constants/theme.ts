@@ -57,3 +57,23 @@ export const shadow = {
     elevation: 6,
   },
 };
+
+// ---------------------------------------------------------------------------
+// Backwards-compatible UPPERCASE token API.
+// ~28 screens were built against an earlier naming (COLORS/FONTS/SPACING/
+// RADIUS/SHADOW) before the tokens were lowercased. These aliases keep those
+// screens working. Keep both APIs in sync when editing tokens.
+// ---------------------------------------------------------------------------
+export const COLORS = {
+  ...colors,
+  error: colors.danger,        // screens use COLORS.error
+  textMuted: colors.textSecond, // screens use COLORS.textMuted
+};
+
+export const SPACING = spacing;
+export const RADIUS = radius;
+export const SHADOW = shadow.card; // screens spread `...SHADOW` directly
+
+export const FONTS = {
+  sizes: { xs: 12, sm: 14, base: 16, lg: 20, xl: 28 },
+};
