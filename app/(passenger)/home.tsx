@@ -1,13 +1,30 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { colors, typography, spacing, radius, shadow } from '../../src/constants/theme';
-
-const RECENT_DESTINATIONS = ['Oyarifa Market', 'Accra Central', '37 Military Hospital'];
+import { api } from '../../src/lib/api';
 
 export default function PassengerHome() {
   const router = useRouter();
   const { user } = useAuthStore();
+  const [recentDests, setRecentDests] = useState<string[]>([]);
+
+  useEffect(() => {
+    api.get('/users/trips').then(r => {
+      const trips: any[] = r.data.trips || [];
+      const seen = new Set<string>();
+      const names: string[] = [];
+      for (const t of [...trips].reverse()) {
+        if (t.dropoff_point_name && !seen.has(t.dropoff_point_name)) {
+          seen.add(t.dropoff_point_name);
+          names.push(t.dropoff_point_name);
+          if (names.length === 3) break;
+        }
+      }
+      setRecentDests(names);
+    }).catch(() => {});
+  }, []);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -49,23 +66,27 @@ export default function PassengerHome() {
       </TouchableOpacity>
 
       {/* Recent */}
-      <Text style={styles.sectionTitle}>Recent destinations</Text>
-      {RECENT_DESTINATIONS.map((dest) => (
-        <TouchableOpacity
-          key={dest}
-          style={styles.recentRow}
-          onPress={() => router.push({ pathname: '/(passenger)/search', params: { dest } })}
-          activeOpacity={0.7}
-        >
-          <View style={styles.recentIcon}><Text>📍</Text></View>
-          <Text style={styles.recentText}>{dest}</Text>
-          <Text style={styles.recentArrow}>›</Text>
-        </TouchableOpacity>
-      ))}
+      {recentDests.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>Recent destinations</Text>
+          {recentDests.map((dest) => (
+            <TouchableOpacity
+              key={dest}
+              style={styles.recentRow}
+              onPress={() => router.push({ pathname: '/(passenger)/search', params: { dest } })}
+              activeOpacity={0.7}
+            >
+              <View style={styles.recentIcon}><Text>📍</Text></View>
+              <Text style={styles.recentText}>{dest}</Text>
+              <Text style={styles.recentArrow}>›</Text>
+            </TouchableOpacity>
+          ))}
+        </>
+      )}
 
       {/* Become a driver */}
       {!user?.role_flags.includes('DRIVER') && (
-        <TouchableOpacity style={styles.driverCard} onPress={() => router.push('/driver/apply')} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.driverCard} onPress={() => router.push('/onboarding/become-driver')} activeOpacity={0.85}>
           <Text style={styles.driverTitle}>🚗 Earn with WeMove</Text>
           <Text style={styles.driverSub}>Share your commute and earn on trips you're already making.</Text>
           <Text style={styles.driverCta}>Become a driver →</Text>

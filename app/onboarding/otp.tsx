@@ -51,6 +51,9 @@ export default function OTPScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Enter the code</Text>
       <Text style={styles.subtitle}>Sent to {phone}</Text>
+      <TouchableOpacity onPress={() => router.back()} style={styles.changeNum}>
+        <Text style={styles.changeNumText}>← Change number</Text>
+      </TouchableOpacity>
 
       <OtpInput
         numberOfDigits={6}
@@ -96,4 +99,6 @@ const styles = StyleSheet.create({
   resend: { marginTop: spacing.lg, alignSelf: 'center' },
   resendText: { ...typography.bodyBold, color: colors.gold },
   resendDisabled: { color: colors.textHint },
+  changeNum: { marginBottom: spacing.xl },
+  changeNumText: { ...typography.caption, color: colors.gold },
 });

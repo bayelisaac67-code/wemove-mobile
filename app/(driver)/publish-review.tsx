@@ -4,6 +4,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOW } from '../../src/constants/theme';
 import { api } from '../../src/lib/api';
 
+const CORRIDOR_ID = '00000000-0000-0000-0000-000000000001';
+
 export default function PublishReviewScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<any>();
@@ -20,7 +22,7 @@ export default function PublishReviewScreen() {
       const departure = new Date();
       departure.setHours(Number(params.hour), Number(params.min), 0, 0);
       await api.post('/trips', {
-        corridor_id: '00000000-0000-0000-0000-000000000001',
+        corridor_id: CORRIDOR_ID,
         direction: params.direction,
         origin_point_id: params.origin,
         destination_point_id: params.destination,

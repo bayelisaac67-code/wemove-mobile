@@ -23,9 +23,9 @@ export default function AccountScreen() {
 
       <View style={s.section}>
         <MenuItem icon="👤" label="Edit profile" onPress={() => router.push('/onboarding/profile')} />
-        <MenuItem icon="💳" label="Payment methods" onPress={() => {}} />
-        <MenuItem icon="🗺️" label="Saved routes" onPress={() => {}} />
-        <MenuItem icon="🚨" label="Emergency contact" onPress={() => {}} />
+        <MenuItem icon="💳" label="Payment methods" onPress={() => Alert.alert('Coming soon', 'This feature is on the way.')} />
+        <MenuItem icon="🗺️" label="Saved routes" onPress={() => Alert.alert('Coming soon', 'This feature is on the way.')} />
+        <MenuItem icon="🚨" label="Emergency contact" onPress={() => Alert.alert('Coming soon', 'This feature is on the way.')} />
       </View>
 
       <View style={s.section}>
@@ -34,7 +34,7 @@ export default function AccountScreen() {
       </View>
 
       <View style={s.section}>
-        <MenuItem icon="❓" label="Help & support" onPress={() => {}} />
+        <MenuItem icon="❓" label="Help & support" onPress={() => Alert.alert('Coming soon', 'This feature is on the way.')} />
         <MenuItem icon="🚪" label="Log out" onPress={() => Alert.alert('Log out?', '', [{ text: 'Cancel', style: 'cancel' }, { text: 'Log out', style: 'destructive', onPress: () => { logout(); router.replace('/'); } }])} textColor={COLORS.error} />
       </View>
     </ScrollView>
