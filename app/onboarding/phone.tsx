@@ -6,12 +6,14 @@ import { api } from '../../src/lib/api';
 
 export default function PhoneScreen() {
   const router = useRouter();
+  const [countryCode, setCountryCode] = useState('233');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const digits = phone.replace(/\D/g, '');
-  const e164 = `+${digits}`;
+  const code = countryCode.replace(/\D/g, '');
+  const national = phone.replace(/\D/g, '').replace(/^0/, '');
+  const e164 = `+${code}${national}`;
   const valid = /^\+[1-9]\d{7,14}$/.test(e164);
 
   const sendOTP = async () => {
@@ -39,16 +41,23 @@ export default function PhoneScreen() {
 
         <View style={styles.inputRow}>
           <View style={styles.dialCode}>
-            <Text style={styles.dialText}>+</Text>
+            <Text style={styles.dialPlus}>+</Text>
+            <TextInput
+              style={styles.dialInput}
+              keyboardType="phone-pad"
+              value={countryCode}
+              onChangeText={setCountryCode}
+              maxLength={4}
+            />
           </View>
           <TextInput
             style={styles.input}
-            placeholder="233 241 234 567"
+            placeholder="024 123 4567"
             placeholderTextColor={colors.textHint}
             keyboardType="phone-pad"
             value={phone}
             onChangeText={setPhone}
-            maxLength={15}
+            maxLength={10}
             autoFocus
           />
         </View>
@@ -72,11 +81,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.navy },
   backBtn: { paddingTop: 60, paddingLeft: spacing.lg },
   backText: { fontSize: 24, color: colors.white },
-  inner: { flex: 1, padding: spacing.lg, justifyContent: 'center', gap: spacing.md },
+  inner: { flex: 1, padding: spacing.lg, paddingTop: 80, justifyContent: 'flex-start', gap: spacing.md },
   title: { ...typography.headline, color: colors.white },
   subtitle: { ...typography.body, color: colors.textSecond, marginBottom: spacing.sm },
   inputRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   dialCode: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 88,
     backgroundColor: colors.navyLight,
     borderRadius: radius.md,
     borderWidth: 1,
@@ -84,7 +96,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 16,
   },
-  dialText: { ...typography.bodyBold, color: colors.white },
+  dialPlus: { ...typography.bodyBold, color: colors.white },
+  dialInput: { ...typography.bodyBold, color: colors.white, flex: 1, marginLeft: 2, padding: 0 },
   input: {
     flex: 1,
     backgroundColor: colors.navyLight,

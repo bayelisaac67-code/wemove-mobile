@@ -49,11 +49,11 @@ export default function OTPScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <Text style={styles.backText}>←</Text>
+      </TouchableOpacity>
       <Text style={styles.title}>Enter the code</Text>
       <Text style={styles.subtitle}>Sent to {phone}</Text>
-      <TouchableOpacity onPress={() => router.back()} style={styles.changeNum}>
-        <Text style={styles.changeNumText}>← Change number</Text>
-      </TouchableOpacity>
 
       <OtpInput
         numberOfDigits={6}
@@ -81,7 +81,9 @@ export default function OTPScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.navy, padding: spacing.lg, paddingTop: 80 },
+  container: { flex: 1, backgroundColor: colors.navy, padding: spacing.lg, paddingTop: 110 },
+  backBtn: { position: 'absolute', top: 60, left: spacing.lg },
+  backText: { fontSize: 24, color: colors.white },
   title: { ...typography.headline, color: colors.white, marginBottom: spacing.sm },
   subtitle: { ...typography.body, color: colors.textSecond, marginBottom: spacing.xl },
   otpContainer: { marginBottom: spacing.md },
@@ -99,6 +101,4 @@ const styles = StyleSheet.create({
   resend: { marginTop: spacing.lg, alignSelf: 'center' },
   resendText: { ...typography.bodyBold, color: colors.gold },
   resendDisabled: { color: colors.textHint },
-  changeNum: { marginBottom: spacing.xl },
-  changeNumText: { ...typography.caption, color: colors.gold },
 });
