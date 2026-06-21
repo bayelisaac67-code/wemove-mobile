@@ -12,14 +12,14 @@ const METHODS = [
 
 export default function PaymentScreen() {
   const router = useRouter();
-  const { tripId, seats, total } = useLocalSearchParams<{ tripId: string; seats: string; total: string }>();
+  const { tripId, seats, total, pickup_point_id, dropoff_point_id } = useLocalSearchParams<{ tripId: string; seats: string; total: string; pickup_point_id: string; dropoff_point_id: string }>();
   const [selected, setSelected] = useState('MOMO');
   const [loading, setLoading] = useState(false);
 
   async function handleConfirm() {
     setLoading(true);
     try {
-      const res = await api.post('/bookings', { trip_id: tripId, seats: Number(seats), payment_method: selected });
+      const res = await api.post('/bookings', { trip_id: tripId, seats: Number(seats), payment_method: selected, pickup_point_id, dropoff_point_id });
       router.replace({ pathname: '/(passenger)/awaiting', params: { bookingId: res.data.booking.id } });
     } catch (e: any) {
       Alert.alert('Booking failed', e?.response?.data?.message || 'Please try again.');

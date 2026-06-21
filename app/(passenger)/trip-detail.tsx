@@ -6,13 +6,16 @@ import { api } from '../../src/lib/api';
 
 export default function TripDetailScreen() {
   const router = useRouter();
-  const { tripId } = useLocalSearchParams<{ tripId: string }>();
+  const { tripId, pickup_point_id, dropoff_point_id } = useLocalSearchParams<{ tripId: string; pickup_point_id: string; dropoff_point_id: string }>();
   const [trip, setTrip] = useState<any>(null);
   const [seats, setSeats] = useState(1);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get(`/trips/${tripId}`).then(r => setTrip(r.data.trip)).finally(() => setLoading(false));
+    api.get(`/trips/${tripId}`, { params: { pickup_point_id, dropoff_point_id } })
+      .then(r => setTrip(r.data.trip))
+      .catch(() => setTrip(null))
+      .finally(() => setLoading(false));
   }, [tripId]);
 
   if (loading) return <View style={[s.container, { justifyContent: 'center' }]}><ActivityIndicator color={COLORS.gold} size="large" /></View>;
@@ -49,7 +52,7 @@ export default function TripDetailScreen() {
         <Text style={s.priceValue}>GHS {total}</Text>
       </View>
 
-      <TouchableOpacity style={s.btn} onPress={() => router.push({ pathname: '/(passenger)/payment', params: { tripId, seats: String(seats), total } })}>
+      <TouchableOpacity style={s.btn} onPress={() => router.push({ pathname: '/(passenger)/payment', params: { tripId, seats: String(seats), total, pickup_point_id, dropoff_point_id } })}>
         <Text style={s.btnText}>Continue to payment</Text>
       </TouchableOpacity>
     </ScrollView>

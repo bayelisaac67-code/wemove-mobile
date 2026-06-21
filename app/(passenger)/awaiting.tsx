@@ -46,7 +46,7 @@ export default function AwaitingScreen() {
       <ActivityIndicator color={COLORS.gold} size="large" style={{ marginBottom: SPACING.xl }} />
       <Text style={s.waitTitle}>Waiting for driver{dots}</Text>
       <Text style={s.waitSub}>The driver will accept or decline shortly</Text>
-      <TouchableOpacity style={s.cancelBtn} onPress={async () => { await api.patch(`/bookings/${bookingId}/cancel`); router.back(); }}>
+      <TouchableOpacity style={s.cancelBtn} onPress={async () => { try { await api.delete(`/bookings/${bookingId}`); } catch {} router.back(); }}>
         <Text style={s.cancelText}>Cancel request</Text>
       </TouchableOpacity>
     </View>

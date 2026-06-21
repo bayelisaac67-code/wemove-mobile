@@ -30,7 +30,7 @@ export default function ConfirmedScreen() {
   async function handleCancel() {
     Alert.alert('Cancel booking?', 'A cancellation fee may apply.', [
       { text: 'Keep booking', style: 'cancel' },
-      { text: 'Cancel', style: 'destructive', onPress: async () => { await api.patch(`/bookings/${bookingId}/cancel`); router.replace('/(passenger)/home'); } },
+      { text: 'Cancel', style: 'destructive', onPress: async () => { try { await api.delete(`/bookings/${bookingId}`); } catch {} router.replace('/(passenger)/home'); } },
     ]);
   }
 

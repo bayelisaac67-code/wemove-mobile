@@ -13,13 +13,17 @@ type Trip = {
 
 export default function TripsListScreen() {
   const router = useRouter();
-  const { destination } = useLocalSearchParams<{ destination: string }>();
+  const { corridor_id, direction, pickup_point_id, dropoff_point_id, dropoff_name } =
+    useLocalSearchParams<{ corridor_id: string; direction: string; pickup_point_id: string; dropoff_point_id: string; dropoff_name: string }>();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.post('/trips/search', { destination }).then(r => setTrips(r.data.trips || [])).finally(() => setLoading(false));
-  }, [destination]);
+    api.get('/trips/search', { params: { corridor_id, direction, pickup_point_id, dropoff_point_id, seats: 1 } })
+      .then(r => setTrips(r.data.trips || []))
+      .catch(() => setTrips([]))
+      .finally(() => setLoading(false));
+  }, [pickup_point_id, dropoff_point_id]);
 
   function stars(n: number) { return '⭐'.repeat(Math.round(n)); }
 
@@ -27,7 +31,7 @@ export default function TripsListScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Rides to {destination}</Text>
+      <Text style={styles.heading}>Rides to {dropoff_name}</Text>
       {trips.length === 0
         ? <View style={styles.empty}><Text style={styles.emptyIcon}>🚗</Text><Text style={styles.emptyText}>No rides match right now</Text><Text style={styles.emptyHint}>Try a different time or check back soon</Text></View>
         : (
@@ -36,7 +40,7 @@ export default function TripsListScreen() {
             keyExtractor={t => t.id}
             contentContainerStyle={{ gap: SPACING.md, paddingBottom: SPACING.xxl }}
             renderItem={({ item: t }) => (
-              <TouchableOpacity style={styles.card} onPress={() => router.push({ pathname: '/(passenger)/trip-detail', params: { tripId: t.id } })}>
+              <TouchableOpacity style={styles.card} onPress={() => router.push({ pathname: '/(passenger)/trip-detail', params: { tripId: t.id, pickup_point_id, dropoff_point_id } })}>
                 <View style={styles.cardTop}>
                   <Text style={styles.time}>{new Date(t.departure_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
                   <Text style={styles.price}>GHS {t.per_seat_price}</Text>
