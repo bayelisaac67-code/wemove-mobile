@@ -17,7 +17,7 @@ export default function TripDashboardScreen() {
     setBookings(b.data.bookings || []);
   }
 
-  useEffect(() => { refresh().finally(() => setLoading(false)); }, []);
+  useEffect(() => { refresh().catch(() => {}).finally(() => setLoading(false)); }, []);
 
   async function handleAccept(bookingId: string) {
     await api.patch(`/bookings/${bookingId}/accept`);

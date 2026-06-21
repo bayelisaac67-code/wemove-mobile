@@ -16,7 +16,7 @@ export default function PublishSeatsScreen() {
       const v = r.data.vehicle;
       setVehicle(v);
       setSeats(Math.max(1, (v?.seat_capacity || 5) - 1));
-    }).finally(() => setLoading(false));
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const max = vehicle ? vehicle.seat_capacity - 1 : 4;

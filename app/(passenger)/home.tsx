@@ -48,7 +48,7 @@ export default function PassengerHome() {
 
       {/* Verification banner */}
       {user?.verification_status !== 'VERIFIED' && (
-        <TouchableOpacity style={styles.verifyBanner} onPress={() => router.push('/onboarding/verify')} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.verifyBanner} onPress={() => router.push('/onboarding/verification-status')} activeOpacity={0.85}>
           <Text style={styles.verifyText}>
             {user?.verification_status === 'PENDING'
               ? '⏳ Verification in progress — you can browse but not book yet.'

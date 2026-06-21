@@ -15,9 +15,9 @@ export default function InTripScreen() {
         const b = r.data.booking;
         setBooking(b);
         if (b?.status === 'COMPLETED') { clearInterval(t); router.replace({ pathname: '/(passenger)/rate', params: { bookingId } }); }
-      });
+      }).catch(() => {});
     }, 5000);
-    api.get(`/bookings/${bookingId}`).then(r => setBooking(r.data.booking));
+    api.get(`/bookings/${bookingId}`).then(r => setBooking(r.data.booking)).catch(() => {});
     return () => clearInterval(t);
   }, [bookingId]);
 

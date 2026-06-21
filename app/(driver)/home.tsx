@@ -19,7 +19,7 @@ export default function DriverHomeScreen() {
       setTrips(t.data.trips || []);
       setEarnings(e.data.total_earnings || 0);
       setPendingRequests(t.data.trips?.reduce((acc: number, tr: any) => acc + (tr.pending_requests || 0), 0) || 0);
-    }).finally(() => setLoading(false));
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   return (

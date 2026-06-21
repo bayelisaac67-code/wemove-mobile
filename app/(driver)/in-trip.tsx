@@ -12,7 +12,7 @@ export default function DriverInTripScreen() {
   const intervalRef = useRef<any>(null);
 
   useEffect(() => {
-    api.get(`/trips/${tripId}/pickups`).then(r => setPickups(r.data.pickups || []));
+    api.get(`/trips/${tripId}/pickups`).then(r => setPickups(r.data.pickups || [])).catch(() => {});
     return () => clearInterval(intervalRef.current);
   }, []);
 

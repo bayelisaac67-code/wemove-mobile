@@ -4,6 +4,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOW } from '../../src/constants/theme';
 import { api } from '../../src/lib/api';
 
+const CORRIDOR_ID = 'a1b2c3d4-0000-0000-0000-000000000001';
+
 export default function PublishRouteScreen() {
   const router = useRouter();
   const { direction } = useLocalSearchParams<{ direction: string }>();
@@ -13,10 +15,10 @@ export default function PublishRouteScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/corridors/1/pickup-points').then(r => {
-      const pts = r.data.pickup_points || [];
+    api.get(`/corridors/${CORRIDOR_ID}/pickup-points`).then(r => {
+      const pts = r.data.pickupPoints || [];
       setPoints(direction === 'REVERSE' ? [...pts].reverse() : pts);
-    }).finally(() => setLoading(false));
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [direction]);
 
   const originIdx = points.findIndex(p => p.id === origin);

@@ -11,7 +11,7 @@ export default function ConfirmedScreen() {
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
-    api.get(`/bookings/${bookingId}`).then(r => setBooking(r.data.booking));
+    api.get(`/bookings/${bookingId}`).then(r => setBooking(r.data.booking)).catch(() => {});
   }, [bookingId]);
 
   useEffect(() => {

@@ -21,7 +21,7 @@ export default function DriverRateScreen() {
       const initial: Record<string, { stars: number; tags: string[] }> = {};
       completed.forEach((b: any) => { initial[b.id] = { stars: 5, tags: [] }; });
       setRatings(initial);
-    }).finally(() => setLoading(false));
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   async function handleSubmit() {

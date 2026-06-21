@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../src/constants/theme';
 import { api } from '../../src/lib/api';
 
-type Status = 'PENDING' | 'VERIFIED' | 'REJECTED';
+type Status = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 
 export default function VerificationStatusScreen() {
   const router = useRouter();
@@ -16,8 +16,10 @@ export default function VerificationStatusScreen() {
     async function fetchStatus() {
       try {
         const res = await api.get('/users/me');
-        setStatus(res.data.user.verification_status);
-        setReason(res.data.user.rejection_reason || '');
+        setStatus(res.data.user?.verification_status || 'PENDING');
+        setReason(res.data.user?.rejection_reason || '');
+      } catch {
+        // Network hiccup or cold start — keep the default instead of crashing.
       } finally {
         setLoading(false);
       }
@@ -31,11 +33,14 @@ export default function VerificationStatusScreen() {
     </View>
   );
 
-  const config = {
+  const CONFIG = {
+    UNVERIFIED: { emoji: '📋', title: 'Verify your identity', color: COLORS.gold, message: 'Upload your Ghana Card and a selfie to start booking rides.' },
     PENDING: { emoji: '⏳', title: 'Verification in progress', color: COLORS.gold, message: "We're reviewing your details — usually within a few hours. You can browse rides while you wait." },
     VERIFIED: { emoji: '✅', title: 'You\'re verified!', color: '#4CAF50', message: "Your identity has been confirmed. You're ready to book rides." },
     REJECTED: { emoji: '❌', title: 'Verification failed', color: COLORS.error, message: reason || 'Your documents could not be verified. Please resubmit.' },
-  }[status];
+  };
+  // Fallback to PENDING so an unexpected status can never crash the screen.
+  const config = CONFIG[status] || CONFIG.PENDING;
 
   return (
     <View style={styles.container}>
@@ -43,6 +48,16 @@ export default function VerificationStatusScreen() {
       <Text style={[styles.title, { color: config.color }]}>{config.title}</Text>
       <Text style={styles.message}>{config.message}</Text>
 
+      {status === 'UNVERIFIED' && (
+        <>
+          <TouchableOpacity style={styles.btn} onPress={() => router.push('/onboarding/ghana-card')}>
+            <Text style={styles.btnText}>Start verification</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.btnOutline, { marginTop: SPACING.md }]} onPress={() => router.replace('/(passenger)/home')}>
+            <Text style={styles.btnOutlineText}>Browse rides first</Text>
+          </TouchableOpacity>
+        </>
+      )}
       {status === 'VERIFIED' && (
         <TouchableOpacity style={styles.btn} onPress={() => router.replace('/(passenger)/home')}>
           <Text style={styles.btnText}>Start exploring rides</Text>

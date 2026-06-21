@@ -8,7 +8,7 @@ export default function EarningsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/users/earnings').then(r => setData(r.data)).finally(() => setLoading(false));
+    api.get('/users/earnings').then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <View style={[s.container, { justifyContent: 'center' }]}><ActivityIndicator color={COLORS.gold} size="large" /></View>;
