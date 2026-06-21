@@ -11,14 +11,14 @@ export default function PassengerHome() {
   const [recentDests, setRecentDests] = useState<string[]>([]);
 
   useEffect(() => {
-    api.get('/users/trips').then(r => {
-      const trips: any[] = r.data.trips || [];
+    api.get('/users/me/trips').then(r => {
+      const bookings: any[] = r.data.bookings || [];
       const seen = new Set<string>();
       const names: string[] = [];
-      for (const t of [...trips].reverse()) {
-        if (t.dropoff_point_name && !seen.has(t.dropoff_point_name)) {
-          seen.add(t.dropoff_point_name);
-          names.push(t.dropoff_point_name);
+      for (const b of bookings) {
+        if (b.dropoff_name && !seen.has(b.dropoff_name)) {
+          seen.add(b.dropoff_name);
+          names.push(b.dropoff_name);
           if (names.length === 3) break;
         }
       }

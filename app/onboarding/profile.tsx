@@ -18,7 +18,7 @@ export default function ProfileScreen() {
     if (!fullName.trim()) { setError('Full name is required'); return; }
     setLoading(true);
     try {
-      await api.put('/users/profile', { full_name: fullName.trim(), preferred_name: preferredName.trim(), email: email.trim() || undefined });
+      await api.patch('/users/me', { full_name: fullName.trim(), preferred_name: preferredName.trim(), email: email.trim() || undefined });
       router.push('/onboarding/ghana-card');
     } catch {
       setError('Failed to save profile. Please try again.');

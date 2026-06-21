@@ -17,7 +17,10 @@ export default function HistoryScreen() {
 
   useEffect(() => {
     setLoading(true);
-    api.get('/users/trips').then(r => setBookings(r.data.trips || [])).finally(() => setLoading(false));
+    api.get('/users/me/trips')
+      .then(r => setBookings(r.data.bookings || []))
+      .catch(() => setBookings([]))
+      .finally(() => setLoading(false));
   }, []);
 
   const now = Date.now();
@@ -53,7 +56,7 @@ export default function HistoryScreen() {
                       <Text style={s.badgeText}>{b.status.replace(/_/g, ' ')}</Text>
                     </View>
                   </View>
-                  <Text style={s.route}>{b.pickup_point_name} → {b.dropoff_point_name}</Text>
+                  <Text style={s.route}>{b.pickup_name} → {b.dropoff_name}</Text>
                   <Text style={s.price}>GHS {b.total_price} · {b.seats} seat{b.seats !== 1 ? 's' : ''}</Text>
                 </TouchableOpacity>
               )}

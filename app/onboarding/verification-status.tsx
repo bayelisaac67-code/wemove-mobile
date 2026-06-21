@@ -15,9 +15,9 @@ export default function VerificationStatusScreen() {
   useEffect(() => {
     async function fetchStatus() {
       try {
-        const res = await api.get('/users/profile');
-        setStatus(res.data.verification_status);
-        setReason(res.data.rejection_reason || '');
+        const res = await api.get('/users/me');
+        setStatus(res.data.user.verification_status);
+        setReason(res.data.user.rejection_reason || '');
       } finally {
         setLoading(false);
       }
