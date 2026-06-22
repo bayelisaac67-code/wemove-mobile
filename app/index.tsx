@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 1,
     justifyContent: 'flex-start',
-    paddingTop: '14%',
+    paddingTop: '17%',
   },
   logo: {
     ...typography.display,
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 20,
     lineHeight: 30,
-    color: colors.gold,
+    color: colors.white,
     fontWeight: '500',
   },
   footer: {
