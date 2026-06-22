@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { OtpInput } from 'react-native-otp-entry';
 import { colors, typography, spacing, radius } from '../../src/constants/theme';
@@ -47,35 +47,53 @@ export default function OTPScreen() {
     setError('');
   };
 
+  function goBack() {
+    if (loading) return; // block back while verifying
+    Alert.alert('Go back?', 'You'll need to enter your phone number again.', [
+      { text: 'Stay', style: 'cancel' },
+      { text: 'Go back', onPress: () => router.back() },
+    ]);
+  }
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={styles.backText}>←</Text>
-      </TouchableOpacity>
+      {!loading && (
+        <TouchableOpacity style={styles.backBtn} onPress={goBack}>
+          <Text style={styles.backText}>← Wrong number?</Text>
+        </TouchableOpacity>
+      )}
       <Text style={styles.title}>Enter the code</Text>
       <Text style={styles.subtitle}>Sent to {phone}</Text>
 
-      <OtpInput
-        numberOfDigits={6}
-        onFilled={verify}
-        onTextChange={setCode}
-        theme={{
-          containerStyle: styles.otpContainer,
-          inputsContainerStyle: styles.otpInputsContainer,
-          pinCodeContainerStyle: styles.otpBox,
-          pinCodeTextStyle: styles.otpText,
-          focusedPinCodeContainerStyle: styles.otpBoxFocused,
-        }}
-      />
+      {loading ? (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator color={colors.gold} size="large" />
+          <Text style={styles.loadingText}>Verifying…</Text>
+        </View>
+      ) : (
+        <OtpInput
+          numberOfDigits={6}
+          onFilled={verify}
+          onTextChange={setCode}
+          theme={{
+            containerStyle: styles.otpContainer,
+            inputsContainerStyle: styles.otpInputsContainer,
+            pinCodeContainerStyle: styles.otpBox,
+            pinCodeTextStyle: styles.otpText,
+            focusedPinCodeContainerStyle: styles.otpBoxFocused,
+          }}
+        />
+      )}
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      {loading && <ActivityIndicator color={colors.gold} style={{ marginTop: spacing.md }} />}
 
-      <TouchableOpacity onPress={resend} disabled={resendTimer > 0} style={styles.resend}>
-        <Text style={[styles.resendText, resendTimer > 0 && styles.resendDisabled]}>
-          {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend code'}
-        </Text>
-      </TouchableOpacity>
+      {!loading && (
+        <TouchableOpacity onPress={resend} disabled={resendTimer > 0} style={styles.resend}>
+          <Text style={[styles.resendText, resendTimer > 0 && styles.resendDisabled]}>
+            {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend code'}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -101,4 +119,6 @@ const styles = StyleSheet.create({
   resend: { marginTop: spacing.lg, alignSelf: 'center' },
   resendText: { ...typography.bodyBold, color: colors.gold },
   resendDisabled: { color: colors.textHint },
+  loadingBox: { alignItems: 'center', marginTop: spacing.xl, gap: spacing.md },
+  loadingText: { color: colors.textSecond, ...typography.body },
 });
