@@ -49,7 +49,7 @@ export default function OTPScreen() {
 
   function goBack() {
     if (loading) return; // block back while verifying
-    Alert.alert('Go back?', 'You'll need to enter your phone number again.', [
+    Alert.alert('Go back?', 'You will need to enter your phone number again.', [
       { text: 'Stay', style: 'cancel' },
       { text: 'Go back', onPress: () => router.back() },
     ]);
