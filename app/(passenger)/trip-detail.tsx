@@ -29,7 +29,7 @@ export default function TripDetailScreen() {
 
       <View style={s.card}>
         <Row label="Departure" value={new Date(trip.departure_time).toLocaleString()} />
-        <Row label="Driver" value={`${trip.driver_name} · ⭐${trip.driver_rating?.toFixed(1)}`} />
+        <Row label="Driver" value={`${trip.driver_name} · ⭐${trip.driver_rating != null ? Number(trip.driver_rating).toFixed(1) : 'New'}`} />
         <Row label="Vehicle" value={`${trip.vehicle_colour} ${trip.vehicle_make} ${trip.vehicle_model}`} />
         <Row label="Plate" value={trip.plate_number} />
         <Row label="Seats left" value={String(trip.available_seats)} />
