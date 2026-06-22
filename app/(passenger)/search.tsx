@@ -7,6 +7,8 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { api } from '../../src/lib/api';
 import BottomNav from '../../src/components/BottomNav';
+import LiveMap from '../../src/components/LiveMap';
+import { useUserLocation } from '../../src/hooks/useUserLocation';
 
 const CORRIDOR_ID = 'a1b2c3d4-0000-0000-0000-000000000001';
 
@@ -23,6 +25,26 @@ export default function SearchScreen() {
   const [fromStop, setFromStop] = useState<any>(null);
   const [toStop, setToStop] = useState<any>(null);
   const [picker, setPicker] = useState<'from' | 'to' | null>(null);
+  const { location, loading: locating, request: requestLocation } = useUserLocation();
+
+  async function useMyLocation() {
+    const coords = await requestLocation();
+    if (!coords) {
+      Alert.alert('Location unavailable', 'Turn on location for WeMove in your phone settings, then try again.');
+      return;
+    }
+    // snap FROM to the nearest corridor stop
+    if (points.length) {
+      let nearest = points[0];
+      let best = Infinity;
+      for (const p of points) {
+        const d = (Number(p.lat) - coords.lat) ** 2 + (Number(p.lng) - coords.lng) ** 2;
+        if (d < best) { best = d; nearest = p; }
+      }
+      setFromStop(nearest);
+      setToStop(null);
+    }
+  }
 
   useEffect(() => {
     api.get(`/corridors/${CORRIDOR_ID}/pickup-points`)
@@ -76,9 +98,11 @@ export default function SearchScreen() {
                 <View style={s.routeCard}>
                   <View style={s.routeHeader}>
                     <Text style={s.routeSection}>FROM</Text>
-                    <TouchableOpacity onPress={() => Alert.alert('Coming soon', 'GPS location detection will be available in the full app build.')} style={s.locBtn}>
-                      <Feather name="navigation" size={13} color={C.muted} />
-                      <Text style={s.locTxt}>Use my location</Text>
+                    <TouchableOpacity onPress={useMyLocation} disabled={locating} style={s.locBtn}>
+                      {locating
+                        ? <ActivityIndicator size="small" color={C.muted} />
+                        : <Feather name="navigation" size={13} color={C.muted} />}
+                      <Text style={s.locTxt}>{locating ? 'Locating…' : 'Use my location'}</Text>
                     </TouchableOpacity>
                   </View>
                   <TouchableOpacity style={s.stopRow} onPress={() => setPicker('from')}>
@@ -111,6 +135,19 @@ export default function SearchScreen() {
                     <Feather name="chevron-down" size={18} color={C.hint} />
                   </TouchableOpacity>
                 </View>
+
+                {/* Live map */}
+                {points.length > 0 && (
+                  <View style={s.mapCard}>
+                    <LiveMap
+                      points={points}
+                      from={fromStop}
+                      to={toStop}
+                      userLocation={location}
+                      height={200}
+                    />
+                  </View>
+                )}
 
                 {/* Ride type */}
                 <View style={s.typeRow}>
@@ -188,6 +225,7 @@ const s = StyleSheet.create({
   subtitle: { fontSize: 13, color: 'rgba(255,255,255,0.55)' },
   content: { backgroundColor: C.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20 },
   routeCard: { backgroundColor: C.white, borderRadius: 16, borderWidth: 1, borderColor: C.border, padding: 16, marginBottom: 16 },
+  mapCard: { borderRadius: 16, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: C.border },
   routeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   routeSection: { fontSize: 11, fontWeight: '700', color: C.hint, letterSpacing: 0.8 },
   locBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },

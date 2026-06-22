@@ -4,6 +4,10 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/lib/api';
 import BottomNav from '../../src/components/BottomNav';
+import LiveMap from '../../src/components/LiveMap';
+import { useUserLocation } from '../../src/hooks/useUserLocation';
+
+const CORRIDOR_ID = 'a1b2c3d4-0000-0000-0000-000000000001';
 
 const C = {
   navy: '#0D1B2A', gold: '#F5B800', white: '#FFFFFF',
@@ -22,6 +26,8 @@ export default function PassengerHome() {
   const router = useRouter();
   const { user } = useAuthStore();
   const [recentDests, setRecentDests] = useState<string[]>([]);
+  const [points, setPoints] = useState<any[]>([]);
+  const { location, request: requestLocation } = useUserLocation();
   const name = user?.preferred_name || user?.full_name?.split(' ')[0] || 'Rider';
   const initials = (user?.preferred_name || user?.full_name || 'W').slice(0, 2).toUpperCase();
 
@@ -38,6 +44,12 @@ export default function PassengerHome() {
       }
       setRecentDests(names);
     }).catch(() => {});
+
+    api.get(`/corridors/${CORRIDOR_ID}/pickup-points`)
+      .then(r => setPoints(r.data.pickupPoints || []))
+      .catch(() => {});
+
+    requestLocation().catch(() => {});
   }, []);
 
   return (
@@ -64,6 +76,16 @@ export default function PassengerHome() {
                   ? '⏳ Verification in progress — you can browse but not book yet.'
                   : '🔐 Complete verification to start booking rides.'}
               </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Live map */}
+          {points.length > 0 && (
+            <TouchableOpacity style={s.mapCard} activeOpacity={0.9} onPress={() => router.push('/(passenger)/search')}>
+              <LiveMap points={points} userLocation={location} height={180} interactive={false} />
+              <View style={s.mapOverlay}>
+                <Text style={s.mapOverlayTxt}>Tap to plan your ride →</Text>
+              </View>
             </TouchableOpacity>
           )}
 
@@ -142,6 +164,9 @@ const s = StyleSheet.create({
   content: { backgroundColor: C.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, minHeight: 600 },
   verifyBanner: { backgroundColor: '#FFFBEB', borderRadius: 10, borderLeftWidth: 3, borderLeftColor: C.gold, padding: 12, marginBottom: 16 },
   verifyTxt: { fontSize: 13, color: '#92400E' },
+  mapCard: { borderRadius: 16, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: C.border },
+  mapOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(13,27,42,0.78)', paddingVertical: 10, paddingHorizontal: 14 },
+  mapOverlayTxt: { color: '#fff', fontSize: 13, fontWeight: '600' },
   findCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.white, borderRadius: 14, borderWidth: 1, borderColor: C.border, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   findLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   searchIcon: { width: 40, height: 40, borderRadius: 10, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
