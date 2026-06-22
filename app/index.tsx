@@ -22,12 +22,15 @@ export default function WelcomeScreen() {
       <StatusBar barStyle="light-content" />
 
       {/* Animated gold "threads" — premium welcome background, full-bleed, welcome screen only */}
-      <ThreadsBackground amplitude={1.2} distance={0.25} fps={30} />
+      <ThreadsBackground amplitude={1.2} distance={0.275} lift={0.2} fps={30} />
 
       {/* Padded content layer on top of the animation */}
       <View style={styles.content}>
         <View style={styles.heroSection}>
-          <Text style={styles.logo}>WeMove.</Text>
+          <Text style={styles.logo}>
+            <Text style={styles.logoWe}>We</Text>
+            <Text style={styles.logoMove}>Move.</Text>
+          </Text>
           <Text style={styles.tagline}>Premium, reliable shared{'\n'}rides for the daily commute.</Text>
         </View>
 
@@ -61,13 +64,23 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: '14%',
   },
   logo: {
     ...typography.display,
     fontSize: 48,
-    color: colors.white,
     marginBottom: spacing.md,
+  },
+  logoWe: {
+    ...typography.display,
+    fontSize: 48,
+    color: colors.white,
+  },
+  logoMove: {
+    ...typography.display,
+    fontSize: 48,
+    color: colors.gold,
   },
   tagline: {
     fontSize: 20,

@@ -9,6 +9,8 @@ type Props = {
   amplitude?: number;
   /** Spacing offset between lines. */
   distance?: number;
+  /** Vertical lift of the wave bundle (0 = centered, higher = up). */
+  lift?: number;
   /** Target frames-per-second. Throttled low for lower-end phones. */
   fps?: number;
   style?: StyleProp<ViewStyle>;
@@ -29,6 +31,7 @@ export default function ThreadsBackground({
   color = GOLD,
   amplitude = 1.2,
   distance = 0.25,
+  lift = 0.1,
   fps = 30,
   style,
 }: Props) {
@@ -62,6 +65,7 @@ uniform vec3 iResolution;
 uniform vec3 uColor;
 uniform float uAmplitude;
 uniform float uDistance;
+uniform float uLift;
 uniform vec2 uMouse;
 
 #define PI 3.1415926538
@@ -113,7 +117,7 @@ float lineFn(vec2 st, float width, float perc, float offset, vec2 mouse, float t
         st.x * 0.3
     );
 
-    float y = 0.5 + (perc - 0.5) * distance + xnoise / 2.0 * finalAmplitude;
+    float y = 0.5 + uLift + (perc - 0.5) * distance + xnoise / 2.0 * finalAmplitude;
 
     float line_start = smoothstep(
         y + (width / 2.0) + (u_line_blur * pixel(1.0, iResolution.xy) * blur),
@@ -187,6 +191,7 @@ void main() {
       uColor: { value: new Color(${r}, ${g}, ${b}) },
       uAmplitude: { value: ${amplitude} },
       uDistance: { value: ${distance} },
+      uLift: { value: ${lift} },
       uMouse: { value: new Float32Array([0.5, 0.5]) }
     }
   });
@@ -220,7 +225,7 @@ void main() {
 </script>
 </body>
 </html>`;
-  }, [color, amplitude, distance, fps]);
+  }, [color, amplitude, distance, lift, fps]);
 
   return (
     <View style={[StyleSheet.absoluteFill, style]} pointerEvents="none">
