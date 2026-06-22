@@ -1,14 +1,29 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
-import { colors, typography, spacing, radius, shadow } from '../../src/constants/theme';
 import { api } from '../../src/lib/api';
+import BottomNav from '../../src/components/BottomNav';
+
+const C = {
+  navy: '#0D1B2A', gold: '#F5B800', white: '#FFFFFF',
+  bg: '#F6F7F9', dark: '#111827', muted: '#6B7280',
+  border: '#E5E7EB', goldLight: '#FFFBEB',
+};
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 export default function PassengerHome() {
   const router = useRouter();
   const { user } = useAuthStore();
   const [recentDests, setRecentDests] = useState<string[]>([]);
+  const name = user?.preferred_name || user?.full_name?.split(' ')[0] || 'Rider';
+  const initials = (user?.preferred_name || user?.full_name || 'W').slice(0, 2).toUpperCase();
 
   useEffect(() => {
     api.get('/users/me/trips').then(r => {
@@ -17,8 +32,7 @@ export default function PassengerHome() {
       const names: string[] = [];
       for (const b of bookings) {
         if (b.dropoff_name && !seen.has(b.dropoff_name)) {
-          seen.add(b.dropoff_name);
-          names.push(b.dropoff_name);
+          seen.add(b.dropoff_name); names.push(b.dropoff_name);
           if (names.length === 3) break;
         }
       }
@@ -26,131 +40,132 @@ export default function PassengerHome() {
     }).catch(() => {});
   }, []);
 
-  const greeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
-  };
-
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>{greeting()},</Text>
-          <Text style={styles.name}>{user?.preferred_name || user?.full_name?.split(' ')[0] || 'Rider'} 👋</Text>
+    <View style={s.root}>
+      <ScrollView style={s.scroll} showsVerticalScrollIndicator={false} bounces={false}>
+        {/* Navy header */}
+        <View style={s.header}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.greet}>{greeting()},</Text>
+            <Text style={s.name}>{name} 👋</Text>
+            <Text style={s.sub}>Where are you headed today?</Text>
+          </View>
+          <TouchableOpacity style={s.avatar} onPress={() => router.push('/(passenger)/account')}>
+            <Text style={s.avatarTxt}>{initials}</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/(passenger)/account')}>
-          <Text style={styles.avatarText}>{(user?.preferred_name || 'W')[0].toUpperCase()}</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Verification banner */}
-      {user?.verification_status !== 'VERIFIED' && (
-        <TouchableOpacity style={styles.verifyBanner} onPress={() => router.push('/onboarding/verification-status')} activeOpacity={0.85}>
-          <Text style={styles.verifyText}>
-            {user?.verification_status === 'PENDING'
-              ? '⏳ Verification in progress — you can browse but not book yet.'
-              : '🔐 Finish verification to start booking rides.'}
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Search */}
-      <TouchableOpacity style={styles.searchCard} onPress={() => router.push('/(passenger)/search')} activeOpacity={0.9}>
-        <Text style={styles.searchLabel}>Where are you going?</Text>
-        <View style={styles.searchIcon}>
-          <Text style={{ fontSize: 20 }}>→</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* Recent */}
-      {recentDests.length > 0 && (
-        <>
-          <Text style={styles.sectionTitle}>Recent destinations</Text>
-          {recentDests.map((dest) => (
-            <TouchableOpacity
-              key={dest}
-              style={styles.recentRow}
-              onPress={() => router.push({ pathname: '/(passenger)/search', params: { dest } })}
-              activeOpacity={0.7}
-            >
-              <View style={styles.recentIcon}><Text>📍</Text></View>
-              <Text style={styles.recentText}>{dest}</Text>
-              <Text style={styles.recentArrow}>›</Text>
+        {/* White content */}
+        <View style={s.content}>
+          {user?.verification_status !== 'VERIFIED' && (
+            <TouchableOpacity style={s.verifyBanner} onPress={() => router.push('/onboarding/verification-status')}>
+              <Text style={s.verifyTxt}>
+                {user?.verification_status === 'PENDING'
+                  ? '⏳ Verification in progress — you can browse but not book yet.'
+                  : '🔐 Complete verification to start booking rides.'}
+              </Text>
             </TouchableOpacity>
-          ))}
-        </>
-      )}
+          )}
 
-      {/* Become a driver */}
-      {!user?.role_flags.includes('DRIVER') && (
-        <TouchableOpacity style={styles.driverCard} onPress={() => router.push('/onboarding/become-driver')} activeOpacity={0.85}>
-          <Text style={styles.driverTitle}>🚗 Earn with WeMove</Text>
-          <Text style={styles.driverSub}>Share your commute and earn on trips you're already making.</Text>
-          <Text style={styles.driverCta}>Become a driver →</Text>
-        </TouchableOpacity>
-      )}
-    </ScrollView>
+          {/* Find a shared ride */}
+          <TouchableOpacity style={s.findCard} onPress={() => router.push('/(passenger)/search')} activeOpacity={0.85}>
+            <View style={s.findLeft}>
+              <View style={s.searchIcon}>
+                <Text style={{ fontSize: 16 }}>🔍</Text>
+              </View>
+              <View>
+                <Text style={s.findTitle}>Find a shared ride</Text>
+                <Text style={s.findSub}>Search along the corridor</Text>
+              </View>
+            </View>
+            <Text style={s.findArrow}>→</Text>
+          </TouchableOpacity>
+
+          {/* Ride type cards */}
+          <View style={s.typeRow}>
+            <View style={[s.typeCard, s.typeCardActive]}>
+              <Text style={s.typeIcon}>👥</Text>
+              <Text style={s.typeLabel}>Shared</Text>
+              <Text style={s.typePrice}>GHS 10–15</Text>
+              <Text style={s.typeMeta}>Scheduled · Eco-friendly</Text>
+              <View style={s.bestBadge}><Text style={s.bestBadgeTxt}>BEST VALUE</Text></View>
+            </View>
+            <View style={[s.typeCard, s.typeCardDim]}>
+              <Text style={[s.typeIcon, { opacity: 0.4 }]}>📍</Text>
+              <Text style={[s.typeLabel, { color: C.muted }]}>Solo</Text>
+              <Text style={[s.typePrice, { color: C.muted }]}>Coming soon</Text>
+              <Text style={s.typeMeta}>Door-to-door private ride</Text>
+            </View>
+          </View>
+
+          {/* Recent destinations */}
+          {recentDests.length > 0 && (
+            <View style={s.section}>
+              <Text style={s.sectionTitle}>Recent destinations</Text>
+              {recentDests.map(dest => (
+                <TouchableOpacity key={dest} style={s.recentRow}
+                  onPress={() => router.push({ pathname: '/(passenger)/search', params: { dest } })}>
+                  <Text style={s.recentDot}>📍</Text>
+                  <Text style={s.recentName}>{dest}</Text>
+                  <Text style={s.recentChev}>›</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Become a driver */}
+          {!user?.role_flags?.includes('DRIVER') && (
+            <TouchableOpacity style={s.driverCard} onPress={() => router.push('/onboarding/become-driver')}>
+              <Text style={s.driverTitle}>🚗  Earn with WeMove</Text>
+              <Text style={s.driverSub}>Share your commute and earn on trips you already make.</Text>
+              <Text style={s.driverCta}>Become a driver →</Text>
+            </TouchableOpacity>
+          )}
+
+          <View style={{ height: 24 }} />
+        </View>
+      </ScrollView>
+      <BottomNav active="home" />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.navy },
-  content: { padding: spacing.lg, paddingTop: 60, gap: spacing.md },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
-  greeting: { ...typography.body, color: colors.textSecond },
-  name: { ...typography.title, color: colors.white },
-  avatar: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: colors.gold,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  avatarText: { ...typography.subtitle, color: colors.navy },
-  verifyBanner: {
-    backgroundColor: colors.navyMid,
-    borderRadius: radius.md,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.gold,
-    padding: spacing.md,
-  },
-  verifyText: { ...typography.caption, color: colors.textSecond },
-  searchCard: {
-    backgroundColor: colors.navyLight,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadow.card,
-  },
-  searchLabel: { ...typography.bodyBold, color: colors.textHint },
-  searchIcon: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: colors.gold,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  sectionTitle: { ...typography.label, color: colors.textSecond, marginTop: spacing.sm },
-  recentRow: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
-  },
-  recentIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  recentText: { ...typography.body, color: colors.white, flex: 1 },
-  recentArrow: { color: colors.textHint, fontSize: 20 },
-  driverCard: {
-    backgroundColor: colors.navyMid,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginTop: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.gold + '40',
-  },
-  driverTitle: { ...typography.subtitle, color: colors.white, marginBottom: spacing.xs },
-  driverSub: { ...typography.body, color: colors.textSecond, marginBottom: spacing.md },
-  driverCta: { ...typography.bodyBold, color: colors.gold },
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.navy },
+  scroll: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'flex-start', padding: 20, paddingTop: 60, paddingBottom: 48 },
+  greet: { fontSize: 14, color: 'rgba(255,255,255,0.65)', marginBottom: 2 },
+  name: { fontSize: 26, fontWeight: '700', color: '#fff' },
+  sub: { fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4 },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center' },
+  avatarTxt: { fontSize: 15, fontWeight: '700', color: C.navy },
+  content: { backgroundColor: C.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, minHeight: 600 },
+  verifyBanner: { backgroundColor: '#FFFBEB', borderRadius: 10, borderLeftWidth: 3, borderLeftColor: C.gold, padding: 12, marginBottom: 16 },
+  verifyTxt: { fontSize: 13, color: '#92400E' },
+  findCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.white, borderRadius: 14, borderWidth: 1, borderColor: C.border, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  findLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  searchIcon: { width: 40, height: 40, borderRadius: 10, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
+  findTitle: { fontSize: 15, fontWeight: '600', color: C.dark },
+  findSub: { fontSize: 12, color: C.muted, marginTop: 1 },
+  findArrow: { fontSize: 18, color: C.dark },
+  typeRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  typeCard: { flex: 1, borderRadius: 14, borderWidth: 1.5, padding: 14 },
+  typeCardActive: { backgroundColor: C.white, borderColor: C.dark },
+  typeCardDim: { backgroundColor: C.bg, borderColor: C.border },
+  typeIcon: { fontSize: 22, marginBottom: 6 },
+  typeLabel: { fontSize: 15, fontWeight: '700', color: C.dark, marginBottom: 2 },
+  typePrice: { fontSize: 16, fontWeight: '700', color: C.dark, marginBottom: 4 },
+  typeMeta: { fontSize: 11, color: C.muted },
+  bestBadge: { marginTop: 8, backgroundColor: C.gold, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start' },
+  bestBadgeTxt: { fontSize: 10, fontWeight: '700', color: C.navy },
+  section: { marginBottom: 20 },
+  sectionTitle: { fontSize: 13, fontWeight: '600', color: C.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  recentRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border },
+  recentDot: { fontSize: 16, marginRight: 10 },
+  recentName: { flex: 1, fontSize: 15, color: C.dark },
+  recentChev: { fontSize: 20, color: C.muted },
+  driverCard: { backgroundColor: '#0D1B2A', borderRadius: 14, padding: 18, marginTop: 4 },
+  driverTitle: { fontSize: 16, fontWeight: '700', color: '#fff', marginBottom: 6 },
+  driverSub: { fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 12 },
+  driverCta: { fontSize: 14, fontWeight: '600', color: C.gold },
 });
