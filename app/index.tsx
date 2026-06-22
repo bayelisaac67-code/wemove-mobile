@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-nativ
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
 import { colors, typography, spacing, radius } from '../src/constants/theme';
+import ThreadsBackground from '../src/components/ThreadsBackground';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -20,21 +21,27 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      <View style={styles.heroSection}>
-        <Text style={styles.logo}>WeMove.</Text>
-        <Text style={styles.tagline}>Premium, reliable shared{'\n'}rides for the daily commute.</Text>
-      </View>
+      {/* Animated gold "threads" — premium welcome background, full-bleed, welcome screen only */}
+      <ThreadsBackground amplitude={1.2} distance={0.25} fps={30} />
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.ctaButton} onPress={() => router.push('/onboarding/phone')} activeOpacity={0.85}>
-          <Text style={styles.ctaText}>Get Started</Text>
-        </TouchableOpacity>
+      {/* Padded content layer on top of the animation */}
+      <View style={styles.content}>
+        <View style={styles.heroSection}>
+          <Text style={styles.logo}>WeMove.</Text>
+          <Text style={styles.tagline}>Premium, reliable shared{'\n'}rides for the daily commute.</Text>
+        </View>
 
-        <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/onboarding/phone')} activeOpacity={0.7}>
-          <Text style={styles.loginText}>I already have an account</Text>
-        </TouchableOpacity>
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.ctaButton} onPress={() => router.push('/onboarding/phone')} activeOpacity={0.85}>
+            <Text style={styles.ctaText}>Get Started</Text>
+          </TouchableOpacity>
 
-        <Text style={styles.legal}>By continuing, you agree to our Terms and Privacy Policy.</Text>
+          <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/onboarding/phone')} activeOpacity={0.7}>
+            <Text style={styles.loginText}>I already have an account</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.legal}>By continuing, you agree to our Terms and Privacy Policy.</Text>
+        </View>
       </View>
     </View>
   );
@@ -44,6 +51,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.navy,
+  },
+  content: {
+    flex: 1,
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingTop: 80,
