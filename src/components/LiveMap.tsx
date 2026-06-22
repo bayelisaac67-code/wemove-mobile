@@ -23,6 +23,25 @@ type Props = {
 const NAVY = '#0D1B2A';
 const GOLD = '#F5B800';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MAP TILE SOURCE — the ONE place to change when upgrading to Google Maps.
+//
+// CURRENT (Option A): free OpenStreetMap/Carto tiles. No API key, no card,
+// works in Expo Go today.
+//
+// TO SWITCH TO GOOGLE later (during store registration):
+//   Option B-lite (still WebView, still Expo Go): replace TILE_URL with the
+//     Google Maps tile/JS layer and set GOOGLE_MAPS_KEY below. Nothing else in
+//     the app changes — every screen uses <LiveMap/>, so they stay untouched.
+//   Option B-full (true native feel, needs a dev build): replace this
+//     component's body with react-native-maps <MapView provider={PROVIDER_GOOGLE}>.
+//     Keep the SAME props (points/from/to/userLocation/height/interactive) so
+//     home.tsx and search.tsx need zero edits.
+// ─────────────────────────────────────────────────────────────────────────────
+const GOOGLE_MAPS_KEY = ''; // ← paste your Google Maps key here when ready
+const TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+const TILE_ATTRIBUTION = '&copy; OpenStreetMap &copy; CARTO';
+
 /**
  * Live, interactive map for Expo Go — no Google key, no dev build needed.
  * Renders Leaflet + free Carto tiles inside a WebView. Plots the WeMove
@@ -78,8 +97,8 @@ export default function LiveMap({
       dragging: D.interactive, scrollWheelZoom: D.interactive,
       doubleClickZoom: D.interactive, touchZoom: D.interactive, tap: D.interactive
     });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19, subdomains: 'abcd'
+    L.tileLayer('${TILE_URL}', {
+      attribution: '${TILE_ATTRIBUTION}', maxZoom: 19, subdomains: 'abcd'
     }).addTo(map);
 
     var bounds = [];
