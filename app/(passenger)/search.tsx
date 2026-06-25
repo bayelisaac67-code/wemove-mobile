@@ -9,6 +9,7 @@ import { api } from '../../src/lib/api';
 import BottomNav from '../../src/components/BottomNav';
 import LiveMap from '../../src/components/LiveMap';
 import { useUserLocation } from '../../src/hooks/useUserLocation';
+import { segmentKm, sharedRange, soloRange, co2SavedKg, fmtRange } from '../../src/lib/estimate';
 
 const CORRIDOR_ID = 'a1b2c3d4-0000-0000-0000-000000000001';
 
@@ -75,6 +76,12 @@ export default function SearchScreen() {
   }
 
   const canSearch = !!fromStop && !!toStop;
+
+  // Honest-fork comparison data (PCD §4) — computed once both stops are chosen.
+  const km = canSearch ? segmentKm(fromStop.order_index, toStop.order_index) : 0;
+  const shared = km ? sharedRange(km) : null;
+  const solo = km ? soloRange(km) : null;
+  const co2 = km ? co2SavedKg(km) : 0;
 
   return (
     <View style={s.root}>
@@ -149,23 +156,32 @@ export default function SearchScreen() {
                   </View>
                 )}
 
-                {/* Ride type */}
+                {/* Honest fork — Shared vs Solo, same trip, your choice (PCD §4) */}
+                <Text style={s.compareHint}>
+                  {canSearch ? 'Same trip — you choose. Shared saves money and carbon.' : 'Pick your stops to compare Shared and Solo.'}
+                </Text>
                 <View style={s.typeRow}>
                   <View style={[s.typeCard, s.typeActive]}>
                     <Text style={s.typeIcon}>👥</Text>
                     <Text style={s.typeLabel}>Shared</Text>
-                    <Text style={s.typePrice}>GHS 10–15</Text>
+                    <Text style={s.typePrice}>{shared ? fmtRange(shared) : 'GHS 10–15'}</Text>
                     <View style={s.typeMetas}>
                       <Text style={s.typeMeta}>⏰ Scheduled</Text>
-                      <Text style={s.typeMeta}>🌿 Eco-friendly</Text>
+                      <Text style={s.typeMeta}>📍 Walk to nearby stop</Text>
+                      <Text style={s.typeMetaGreen}>🌿 {co2 ? `~${co2} kg CO₂ saved` : 'Eco-friendly'}</Text>
                     </View>
                     <View style={s.bestBadge}><Text style={s.bestBadgeTxt}>BEST VALUE</Text></View>
                   </View>
                   <View style={[s.typeCard, s.typeDim]}>
-                    <Text style={[s.typeIcon, { opacity: 0.35 }]}>📍</Text>
+                    <Text style={[s.typeIcon, { opacity: 0.5 }]}>🚗</Text>
                     <Text style={[s.typeLabel, { color: C.muted }]}>Solo</Text>
-                    <Text style={[s.typePrice, { color: C.hint }]}>Coming soon</Text>
-                    <Text style={s.typeDimSub}>Door-to-door private ride</Text>
+                    <Text style={[s.typePrice, { color: C.muted }]}>{solo ? fmtRange(solo) : 'GHS 15+'}</Text>
+                    <View style={s.typeMetas}>
+                      <Text style={s.typeMeta}>⚡ On-demand</Text>
+                      <Text style={s.typeMeta}>🚪 Door-to-door</Text>
+                      <Text style={s.typeMeta}>🌿 No carbon saved</Text>
+                    </View>
+                    <View style={s.soonBadge}><Text style={s.soonBadgeTxt}>COMING SOON</Text></View>
                   </View>
                 </View>
 
@@ -239,18 +255,22 @@ const s = StyleSheet.create({
   divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 8 },
   dividerLine: { flex: 1, height: 1, backgroundColor: C.border },
   swapBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.bg, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
-  typeRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  compareHint: { fontSize: 12, color: C.muted, marginBottom: 10, lineHeight: 16 },
+  typeRow: { flexDirection: 'row', gap: 12, marginBottom: 20, alignItems: 'stretch' },
   typeCard: { flex: 1, borderRadius: 14, borderWidth: 1.5, padding: 14 },
   typeActive: { backgroundColor: C.white, borderColor: C.dark },
-  typeDim: { backgroundColor: C.white, borderColor: C.border, opacity: 0.65 },
+  typeDim: { backgroundColor: C.white, borderColor: C.border },
   typeIcon: { fontSize: 24, marginBottom: 6 },
   typeLabel: { fontSize: 15, fontWeight: '700', color: C.dark, marginBottom: 2 },
   typePrice: { fontSize: 15, fontWeight: '700', color: C.dark, marginBottom: 6 },
-  typeMetas: { gap: 2 },
+  typeMetas: { gap: 3 },
   typeMeta: { fontSize: 11, color: C.muted },
+  typeMetaGreen: { fontSize: 11, color: '#059669', fontWeight: '600' },
   typeDimSub: { fontSize: 11, color: C.hint },
   bestBadge: { marginTop: 8, backgroundColor: C.gold, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start' },
   bestBadgeTxt: { fontSize: 10, fontWeight: '700', color: C.navy },
+  soonBadge: { marginTop: 8, backgroundColor: C.bg, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', borderWidth: 1, borderColor: C.border },
+  soonBadgeTxt: { fontSize: 10, fontWeight: '700', color: C.hint },
   btn: { backgroundColor: C.gold, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
   btnDisabled: { opacity: 0.45 },
   btnTxt: { fontSize: 16, fontWeight: '700', color: C.navy },

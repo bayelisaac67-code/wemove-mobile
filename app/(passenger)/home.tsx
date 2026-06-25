@@ -103,20 +103,22 @@ export default function PassengerHome() {
             <Text style={s.findArrow}>→</Text>
           </TouchableOpacity>
 
-          {/* Ride type cards */}
+          {/* Ride type cards — same trip, your choice (PCD §4) */}
           <View style={s.typeRow}>
             <View style={[s.typeCard, s.typeCardActive]}>
               <Text style={s.typeIcon}>👥</Text>
               <Text style={s.typeLabel}>Shared</Text>
               <Text style={s.typePrice}>GHS 10–15</Text>
-              <Text style={s.typeMeta}>Scheduled · Eco-friendly</Text>
+              <Text style={s.typeMeta}>Scheduled · Walk to stop</Text>
+              <Text style={s.typeMetaGreen}>🌿 Saves carbon</Text>
               <View style={s.bestBadge}><Text style={s.bestBadgeTxt}>BEST VALUE</Text></View>
             </View>
             <View style={[s.typeCard, s.typeCardDim]}>
-              <Text style={[s.typeIcon, { opacity: 0.4 }]}>📍</Text>
+              <Text style={[s.typeIcon, { opacity: 0.5 }]}>🚗</Text>
               <Text style={[s.typeLabel, { color: C.muted }]}>Solo</Text>
-              <Text style={[s.typePrice, { color: C.muted }]}>Coming soon</Text>
-              <Text style={s.typeMeta}>Door-to-door private ride</Text>
+              <Text style={[s.typePrice, { color: C.muted }]}>GHS 15+</Text>
+              <Text style={s.typeMeta}>Door-to-door private</Text>
+              <Text style={[s.typeMeta, { color: C.gold, marginTop: 4, fontWeight: '600' }]}>Coming soon</Text>
             </View>
           </View>
 
@@ -181,6 +183,7 @@ const s = StyleSheet.create({
   typeLabel: { fontSize: 15, fontWeight: '700', color: C.dark, marginBottom: 2 },
   typePrice: { fontSize: 16, fontWeight: '700', color: C.dark, marginBottom: 4 },
   typeMeta: { fontSize: 11, color: C.muted },
+  typeMetaGreen: { fontSize: 11, color: '#059669', fontWeight: '600', marginTop: 2 },
   bestBadge: { marginTop: 8, backgroundColor: C.gold, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start' },
   bestBadgeTxt: { fontSize: 10, fontWeight: '700', color: C.navy },
   section: { marginBottom: 20 },

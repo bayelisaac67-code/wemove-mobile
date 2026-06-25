@@ -33,6 +33,11 @@ export default function ConfirmedScreen() {
           </View>
           <Text style={s.bannerTitle}>Ride Confirmed!</Text>
           <Text style={s.bannerSub}>Your seat is booked. Get ready to move.</Text>
+          {booking?.co2_saved_kg != null && (
+            <View style={s.impactPill}>
+              <Text style={s.impactTxt}>🌿 You're saving ~{Number(booking.co2_saved_kg).toFixed(1)} kg CO₂ by sharing this ride</Text>
+            </View>
+          )}
         </View>
 
         {/* Trip details */}
@@ -127,6 +132,8 @@ const s = StyleSheet.create({
   checkCircle: { width: 60, height: 60, borderRadius: 30, backgroundColor: C.green, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   bannerTitle: { fontSize: 22, fontWeight: '700', color: '#065F46', marginBottom: 4 },
   bannerSub: { fontSize: 13, color: '#047857', textAlign: 'center' },
+  impactPill: { marginTop: 14, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14 },
+  impactTxt: { fontSize: 12, color: '#065F46', fontWeight: '600', textAlign: 'center' },
   card: { backgroundColor: C.white, borderRadius: 14, borderWidth: 1, borderColor: C.border, padding: 16, gap: 12 },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   metaLabel: { fontSize: 13, color: C.muted },

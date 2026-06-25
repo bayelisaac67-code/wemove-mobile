@@ -120,6 +120,15 @@ export default function TripDetailScreen() {
               <Text style={s.priceTot}>GHS {total}</Text>
             </View>
           </View>
+
+          {trip.co2_saved_kg != null && (
+            <View style={s.carbonRow}>
+              <Text style={s.carbonTxt}>🌿 ~{(Number(trip.co2_saved_kg) * seats).toFixed(1)} kg CO₂ saved vs riding solo</Text>
+            </View>
+          )}
+          {trip.solo_estimate && (
+            <Text style={s.soloCompare}>A solo ride would cost about GHS {trip.solo_estimate.min}–{trip.solo_estimate.max}.</Text>
+          )}
         </View>
 
         <TouchableOpacity
@@ -169,6 +178,9 @@ const s = StyleSheet.create({
   seatCount: { fontSize: 24, fontWeight: '700', color: C.dark, minWidth: 28, textAlign: 'center' },
   priceCalc: { fontSize: 13, color: C.muted, marginBottom: 2 },
   priceTot: { fontSize: 22, fontWeight: '700', color: C.dark },
+  carbonRow: { marginTop: 14, backgroundColor: '#ECFDF5', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12 },
+  carbonTxt: { fontSize: 13, color: '#059669', fontWeight: '600' },
+  soloCompare: { fontSize: 12, color: C.hint, marginTop: 8 },
   btn: { backgroundColor: C.gold, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 4 },
   btnTxt: { fontSize: 16, fontWeight: '700', color: C.navy },
 });
