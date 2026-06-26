@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../src/lib/api';
-import BottomNav from '../../src/components/BottomNav';
 
 const C = {
   navy: '#0D1B2A', gold: '#F5B800', white: '#FFFFFF',
@@ -23,6 +23,7 @@ export default function PaymentScreen() {
     useLocalSearchParams<{ tripId: string; seats: string; perSeat: string; total: string; pickup_point_id: string; dropoff_point_id: string; pickup_name: string; dropoff_name: string }>();
   const [selected, setSelected] = useState<string>('MOMO');
   const [loading, setLoading] = useState(false);
+  const insets = useSafeAreaInsets();
 
   async function handleConfirm() {
     setLoading(true);
@@ -44,7 +45,7 @@ export default function PaymentScreen() {
 
   return (
     <View style={s.root}>
-      <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView style={s.scroll} contentContainerStyle={[s.scrollContent, { paddingTop: insets.top + 12 }]} showsVerticalScrollIndicator={false}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
           <Feather name="arrow-left" size={22} color={C.dark} />
           <Text style={s.backTxt}>Back</Text>
@@ -103,7 +104,6 @@ export default function PaymentScreen() {
           <Text style={s.btnTxt}>{loading ? 'Requesting…' : `Request Seat · GHS ${total}`}</Text>
         </TouchableOpacity>
       </ScrollView>
-      <BottomNav active="home" />
     </View>
   );
 }

@@ -8,7 +8,7 @@ type Tab = 'home' | 'trips' | 'account';
 
 const TABS: { key: Tab; label: string; icon: string; route: string }[] = [
   { key: 'home', label: 'Home', icon: 'home', route: '/(passenger)/home' },
-  { key: 'trips', label: 'Trips', icon: 'clock', route: '/(passenger)/history' },
+  { key: 'trips', label: 'Rides', icon: 'clock', route: '/(passenger)/history' },
   { key: 'account', label: 'Account', icon: 'user', route: '/(passenger)/account' },
 ];
 

@@ -1,29 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Dimensions,
+} from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../src/lib/api';
-import BottomNav from '../../src/components/BottomNav';
+import MapHero from '../../src/components/MapHero';
+
+const CORRIDOR_ID = 'a1b2c3d4-0000-0000-0000-000000000001';
+const MAP_H = Math.round(Dimensions.get('window').height * 0.28);
 
 const C = {
   navy: '#0D1B2A', gold: '#F5B800', white: '#FFFFFF',
   bg: '#F6F7F9', dark: '#111827', muted: '#6B7280',
-  border: '#E5E7EB', hint: '#9CA3AF',
+  border: '#E5E7EB', hint: '#9CA3AF', green: '#059669', greenBg: '#ECFDF5',
 };
-
-function Avatar({ name }: { name: string }) {
-  return (
-    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontSize: 18, fontWeight: '700', color: '#374151' }}>{(name || '?')[0].toUpperCase()}</Text>
-    </View>
-  );
-}
 
 export default function TripDetailScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { tripId, pickup_point_id, dropoff_point_id, pickup_name, dropoff_name } =
     useLocalSearchParams<{ tripId: string; pickup_point_id: string; dropoff_point_id: string; pickup_name: string; dropoff_name: string }>();
   const [trip, setTrip] = useState<any>(null);
+  const [points, setPoints] = useState<any[]>([]);
   const [seats, setSeats] = useState(1);
   const [loading, setLoading] = useState(true);
 
@@ -32,6 +32,9 @@ export default function TripDetailScreen() {
       .then(r => setTrip(r.data.trip))
       .catch(() => setTrip(null))
       .finally(() => setLoading(false));
+    api.get(`/corridors/${CORRIDOR_ID}/pickup-points`)
+      .then(r => setPoints(r.data.pickupPoints || []))
+      .catch(() => {});
   }, [tripId]);
 
   if (loading) return <View style={{ flex: 1, backgroundColor: C.bg, justifyContent: 'center' }}><ActivityIndicator color={C.gold} size="large" /></View>;
@@ -40,147 +43,119 @@ export default function TripDetailScreen() {
   const pricePerSeat = Number(trip.per_seat_price || 0);
   const total = (pricePerSeat * seats).toFixed(0);
   const depTime = new Date(trip.departure_time);
+  const fromPt = points.find(p => p.id === pickup_point_id) || null;
+  const toPt = points.find(p => p.id === dropoff_point_id) || null;
+  const co2 = trip.co2_saved_kg != null ? (Number(trip.co2_saved_kg) * seats).toFixed(1) : null;
 
   return (
     <View style={s.root}>
-      <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Back */}
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <Feather name="arrow-left" size={22} color={C.dark} />
-          <Text style={s.backTxt}>Back</Text>
-        </TouchableOpacity>
+      <MapHero points={points} from={fromPt} to={toPt} height={MAP_H} interactive={false} onBack={() => router.back()} />
 
-        {/* Time + seats badge */}
-        <View style={s.card}>
-          <View style={s.cardTopRow}>
-            <View>
-              <Text style={s.depTime}>{depTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-              <Text style={s.depDate}>{depTime.toLocaleDateString('en-GH', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
-            </View>
-            <View style={s.seatsBadge}>
-              <Feather name="users" size={13} color={C.muted} />
-              <Text style={s.seatsBadgeTxt}>{trip.available_seats} left</Text>
-            </View>
-          </View>
+      <View style={s.sheet}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+          <View style={s.handle} />
 
+          {/* Driver */}
           <View style={s.driverRow}>
-            <Avatar name={trip.driver_name} />
+            <View style={s.avatar}><Text style={s.avatarTxt}>{(trip.driver_name || '?')[0].toUpperCase()}</Text></View>
             <View style={{ flex: 1 }}>
               <Text style={s.driverName}>{trip.driver_name}</Text>
-              <View style={{ flexDirection: 'row', gap: 10, marginTop: 3 }}>
-                <Text style={s.ratingTxt}>⭐ {trip.driver_rating != null ? Number(trip.driver_rating).toFixed(1) : 'New'}</Text>
-                <Text style={s.reliabilityTxt}>○ {trip.driver_reliability ?? 100}% reliable</Text>
-              </View>
+              <Text style={s.driverMeta}>⭐ {trip.driver_rating != null ? Number(trip.driver_rating).toFixed(1) : 'New'} · {trip.driver_reliability ?? 100}% reliable</Text>
+            </View>
+            <View style={s.timePill}>
+              <Text style={s.timeTxt}>{depTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+              <Text style={s.dateTxt}>{depTime.toLocaleDateString('en-GH', { month: 'short', day: 'numeric' })}</Text>
             </View>
           </View>
 
-          <View style={s.vehicleLine}>
-            <Feather name="truck" size={14} color={C.hint} style={{ marginRight: 8 }} />
-            <Text style={s.vehicleTxt}>{trip.vehicle_colour} {trip.vehicle_make} {trip.vehicle_model} · {trip.plate_number}</Text>
-          </View>
-        </View>
+          <Text style={s.vehicle}>🚗 {trip.vehicle_colour} {trip.vehicle_make} {trip.vehicle_model} · {trip.plate_number}</Text>
 
-        {/* Route */}
-        <View style={s.card}>
-          <View style={s.routeRow}>
-            <View style={s.routeDots}>
-              <View style={s.dotBlack} />
-              <View style={s.routeLine} />
-              <View style={s.dotRed} />
-            </View>
+          {/* Route */}
+          <View style={s.routeCard}>
+            <View style={s.routeDots}><View style={s.dotGreen} /><View style={s.routeLine} /><View style={s.dotRed} /></View>
             <View style={{ flex: 1 }}>
-              <View style={s.routeStop}>
-                <Text style={s.routeStopName}>{trip.pickup_point_name || pickup_name}</Text>
-                <Text style={s.routeStopLabel}>Pickup</Text>
-              </View>
-              <View style={{ height: 18 }} />
-              <View style={s.routeStop}>
-                <Text style={s.routeStopName}>{dropoff_name}</Text>
-                <Text style={s.routeStopLabel}>Drop-off</Text>
-              </View>
+              <Text style={s.stopName}>{trip.pickup_point_name || pickup_name}</Text>
+              <Text style={s.stopLabel}>Pickup</Text>
+              <View style={{ height: 14 }} />
+              <Text style={s.stopName}>{dropoff_name}</Text>
+              <Text style={s.stopLabel}>Drop-off</Text>
             </View>
           </View>
-        </View>
 
-        {/* Seats + price */}
-        <View style={s.card}>
-          <Text style={s.seatsLabel}>SEATS</Text>
+          {/* Seats */}
           <View style={s.seatsRow}>
-            <View style={s.stepper}>
-              <TouchableOpacity style={s.stepBtn} onPress={() => setSeats(Math.max(1, seats - 1))}>
-                <Text style={s.stepTxt}>−</Text>
-              </TouchableOpacity>
-              <Text style={s.seatCount}>{seats}</Text>
-              <TouchableOpacity style={s.stepBtn} onPress={() => setSeats(Math.min(trip.available_seats, seats + 1))}>
-                <Text style={s.stepTxt}>+</Text>
-              </TouchableOpacity>
+            <View>
+              <Text style={s.seatsLabel}>SEATS</Text>
+              <Text style={s.seatsHint}>{trip.available_seats} available</Text>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={s.priceCalc}>GHS {pricePerSeat} × {seats}</Text>
-              <Text style={s.priceTot}>GHS {total}</Text>
+            <View style={s.stepper}>
+              <TouchableOpacity style={s.stepBtn} onPress={() => setSeats(Math.max(1, seats - 1))}><Text style={s.stepTxt}>−</Text></TouchableOpacity>
+              <Text style={s.seatCount}>{seats}</Text>
+              <TouchableOpacity style={s.stepBtn} onPress={() => setSeats(Math.min(trip.available_seats, seats + 1))}><Text style={s.stepTxt}>+</Text></TouchableOpacity>
             </View>
           </View>
 
-          {trip.co2_saved_kg != null && (
-            <View style={s.carbonRow}>
-              <Text style={s.carbonTxt}>🌿 ~{(Number(trip.co2_saved_kg) * seats).toFixed(1)} kg CO₂ saved vs riding solo</Text>
+          {/* Carbon */}
+          {co2 != null && (
+            <View style={s.carbon}>
+              <Text style={s.carbonTxt}>🌿 ~{co2} kg CO₂ saved vs riding solo</Text>
+              {trip.solo_estimate && <Text style={s.soloTxt}>A solo ride would cost about GHS {trip.solo_estimate.min}–{trip.solo_estimate.max}.</Text>}
             </View>
           )}
-          {trip.solo_estimate && (
-            <Text style={s.soloCompare}>A solo ride would cost about GHS {trip.solo_estimate.min}–{trip.solo_estimate.max}.</Text>
-          )}
-        </View>
+        </ScrollView>
 
-        <TouchableOpacity
-          style={s.btn}
-          activeOpacity={0.85}
-          onPress={() => router.push({ pathname: '/(passenger)/payment', params: { tripId, seats: String(seats), perSeat: String(pricePerSeat), total, pickup_point_id, dropoff_point_id, pickup_name, dropoff_name } })}
-        >
-          <Text style={s.btnTxt}>Continue to Payment</Text>
-        </TouchableOpacity>
-      </ScrollView>
-      <BottomNav active="home" />
+        {/* Sticky CTA */}
+        <View style={[s.ctaBar, { paddingBottom: insets.bottom || 16 }]}>
+          <View>
+            <Text style={s.ctaPrice}>GHS {total}</Text>
+            <Text style={s.ctaSub}>GHS {pricePerSeat} × {seats}</Text>
+          </View>
+          <TouchableOpacity
+            style={s.cta}
+            activeOpacity={0.85}
+            onPress={() => router.push({ pathname: '/(passenger)/payment', params: { tripId, seats: String(seats), perSeat: String(pricePerSeat), total, pickup_point_id, dropoff_point_id, pickup_name, dropoff_name } })}
+          >
+            <Text style={s.ctaTxt}>Continue to Payment</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  scroll: { flex: 1 },
-  scrollContent: { padding: 20, paddingTop: 56, paddingBottom: 24, gap: 12 },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  backTxt: { fontSize: 15, color: C.dark },
-  card: { backgroundColor: C.white, borderRadius: 14, borderWidth: 1, borderColor: C.border, padding: 16 },
-  cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
-  depTime: { fontSize: 26, fontWeight: '700', color: C.dark },
-  depDate: { fontSize: 13, color: C.muted, marginTop: 2 },
-  seatsBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.bg, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
-  seatsBadgeTxt: { fontSize: 12, color: C.muted, fontWeight: '600' },
-  driverRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
-  driverName: { fontSize: 16, fontWeight: '600', color: C.dark },
-  ratingTxt: { fontSize: 13, color: C.muted },
-  reliabilityTxt: { fontSize: 13, color: C.muted },
-  vehicleLine: { flexDirection: 'row', alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border },
-  vehicleTxt: { fontSize: 13, color: C.hint },
-  routeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
+  sheet: { flex: 1, backgroundColor: C.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, marginTop: -24, paddingHorizontal: 20 },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: C.border, alignSelf: 'center', marginTop: 10, marginBottom: 16 },
+  driverRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' },
+  avatarTxt: { fontSize: 19, fontWeight: '700', color: '#374151' },
+  driverName: { fontSize: 17, fontWeight: '700', color: C.dark },
+  driverMeta: { fontSize: 12, color: C.muted, marginTop: 2 },
+  timePill: { alignItems: 'flex-end' },
+  timeTxt: { fontSize: 18, fontWeight: '800', color: C.dark },
+  dateTxt: { fontSize: 12, color: C.muted },
+  vehicle: { fontSize: 13, color: C.muted, marginBottom: 16 },
+  routeCard: { flexDirection: 'row', gap: 14, backgroundColor: '#F9FAFB', borderRadius: 14, padding: 16, marginBottom: 16 },
   routeDots: { alignItems: 'center', paddingTop: 4 },
-  dotBlack: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.dark },
-  routeLine: { width: 2, height: 28, backgroundColor: C.border, marginVertical: 4 },
+  dotGreen: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#16A34A' },
+  routeLine: { width: 2, height: 30, backgroundColor: C.border, marginVertical: 4 },
   dotRed: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444' },
-  routeStop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  routeStopName: { fontSize: 15, fontWeight: '500', color: C.dark, flex: 1 },
-  routeStopLabel: { fontSize: 12, color: C.muted },
-  seatsLabel: { fontSize: 11, fontWeight: '700', color: C.hint, letterSpacing: 0.8, marginBottom: 14 },
-  seatsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  stopName: { fontSize: 15, fontWeight: '600', color: C.dark },
+  stopLabel: { fontSize: 12, color: C.muted, marginTop: 1 },
+  seatsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  seatsLabel: { fontSize: 11, fontWeight: '700', color: C.hint, letterSpacing: 0.8 },
+  seatsHint: { fontSize: 13, color: C.muted, marginTop: 3 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   stepBtn: { width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
   stepTxt: { fontSize: 22, color: C.dark, lineHeight: 24 },
-  seatCount: { fontSize: 24, fontWeight: '700', color: C.dark, minWidth: 28, textAlign: 'center' },
-  priceCalc: { fontSize: 13, color: C.muted, marginBottom: 2 },
-  priceTot: { fontSize: 22, fontWeight: '700', color: C.dark },
-  carbonRow: { marginTop: 14, backgroundColor: '#ECFDF5', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12 },
-  carbonTxt: { fontSize: 13, color: '#059669', fontWeight: '600' },
-  soloCompare: { fontSize: 12, color: C.hint, marginTop: 8 },
-  btn: { backgroundColor: C.gold, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 4 },
-  btnTxt: { fontSize: 16, fontWeight: '700', color: C.navy },
+  seatCount: { fontSize: 22, fontWeight: '700', color: C.dark, minWidth: 28, textAlign: 'center' },
+  carbon: { backgroundColor: C.greenBg, borderRadius: 12, padding: 14 },
+  carbonTxt: { fontSize: 13, fontWeight: '600', color: C.green },
+  soloTxt: { fontSize: 12, color: C.muted, marginTop: 6 },
+  ctaBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border },
+  ctaPrice: { fontSize: 20, fontWeight: '800', color: C.dark },
+  ctaSub: { fontSize: 12, color: C.muted },
+  cta: { flex: 1, backgroundColor: C.gold, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  ctaTxt: { fontSize: 16, fontWeight: '800', color: C.navy },
 });

@@ -16,7 +16,7 @@ type MenuItem = { icon: string; label: string; onPress: () => void; danger?: boo
 
 export default function AccountScreen() {
   const router = useRouter();
-  const { user, signOut } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [stats, setStats] = useState({ trips: 0, rating: null as number | null, reliability: 100 });
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function AccountScreen() {
       items: [
         { icon: 'help-circle', label: 'Help & Support', onPress: () => Alert.alert('Support', 'Email support@wemove.app for help.') },
         { icon: 'info', label: 'About WeMove', onPress: () => Alert.alert('WeMove', 'Premium shared rides along the Accra Central ↔ Oyarifa corridor.') },
-        { icon: 'log-out', label: 'Sign Out', danger: true, onPress: () => Alert.alert('Sign out?', '', [{ text: 'Cancel' }, { text: 'Sign out', style: 'destructive', onPress: () => { signOut(); router.replace('/'); } }]) },
+        { icon: 'log-out', label: 'Sign Out', danger: true, onPress: () => Alert.alert('Sign out?', '', [{ text: 'Cancel' }, { text: 'Sign out', style: 'destructive', onPress: () => { logout(); router.replace('/'); } }]) },
       ],
     },
   ];
@@ -132,15 +132,15 @@ export default function AccountScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.navy },
-  header: { alignItems: 'center', paddingTop: 56, paddingBottom: 32, paddingHorizontal: 20 },
+  root: { flex: 1, backgroundColor: C.white },
+  header: { alignItems: 'center', paddingTop: 64, paddingBottom: 24, paddingHorizontal: 20, backgroundColor: C.white },
   avatarCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   avatarTxt: { fontSize: 28, fontWeight: '800', color: C.navy },
-  name: { fontSize: 20, fontWeight: '700', color: '#fff', marginBottom: 4 },
-  phone: { fontSize: 13, color: 'rgba(255,255,255,0.55)', marginBottom: 8 },
-  verifiedBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(16,185,129,0.15)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+  name: { fontSize: 22, fontWeight: '800', color: C.dark, marginBottom: 4 },
+  phone: { fontSize: 13, color: C.muted, marginBottom: 8 },
+  verifiedBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(16,185,129,0.12)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
   verifiedTxt: { fontSize: 11, fontWeight: '700', color: '#10B981' },
-  content: { flex: 1, backgroundColor: C.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 20, paddingHorizontal: 20 },
+  content: { flex: 1, backgroundColor: C.bg, paddingTop: 12, paddingHorizontal: 20 },
   statsCard: { backgroundColor: C.white, borderRadius: 14, borderWidth: 1, borderColor: C.border, padding: 16, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginBottom: 20 },
   statItem: { alignItems: 'center' },
   statVal: { fontSize: 22, fontWeight: '700', color: C.dark, marginBottom: 2 },

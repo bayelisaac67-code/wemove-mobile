@@ -1,48 +1,48 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/store/authStore';
 import { api } from '../../src/lib/api';
 import BottomNav from '../../src/components/BottomNav';
-import LiveMap from '../../src/components/LiveMap';
+import MapHero from '../../src/components/MapHero';
+import LocationRow from '../../src/components/LocationRow';
+import Drawer from '../../src/components/Drawer';
 import { useUserLocation } from '../../src/hooks/useUserLocation';
 
 const CORRIDOR_ID = 'a1b2c3d4-0000-0000-0000-000000000001';
+const MAP_H = Math.round(Dimensions.get('window').height * 0.40);
 
 const C = {
   navy: '#0D1B2A', gold: '#F5B800', white: '#FFFFFF',
   bg: '#F6F7F9', dark: '#111827', muted: '#6B7280',
-  border: '#E5E7EB', goldLight: '#FFFBEB',
+  border: '#E5E7EB', cardBg: '#F3F4F6', goldBg: '#FFFBEB',
 };
 
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
-}
+type RecentDest = { name: string; area?: string };
 
 export default function PassengerHome() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const [recentDests, setRecentDests] = useState<string[]>([]);
+  const [recents, setRecents] = useState<RecentDest[]>([]);
   const [points, setPoints] = useState<any[]>([]);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const { location, request: requestLocation } = useUserLocation();
-  const name = user?.preferred_name || user?.full_name?.split(' ')[0] || 'Rider';
   const initials = (user?.preferred_name || user?.full_name || 'W').slice(0, 2).toUpperCase();
 
   useEffect(() => {
     api.get('/users/me/trips').then(r => {
       const bookings: any[] = r.data.bookings || [];
       const seen = new Set<string>();
-      const names: string[] = [];
+      const out: RecentDest[] = [];
       for (const b of bookings) {
         if (b.dropoff_name && !seen.has(b.dropoff_name)) {
-          seen.add(b.dropoff_name); names.push(b.dropoff_name);
-          if (names.length === 3) break;
+          seen.add(b.dropoff_name);
+          out.push({ name: b.dropoff_name });
+          if (out.length === 3) break;
         }
       }
-      setRecentDests(names);
+      setRecents(out);
     }).catch(() => {});
 
     api.get(`/corridors/${CORRIDOR_ID}/pickup-points`)
@@ -52,148 +52,113 @@ export default function PassengerHome() {
     requestLocation().catch(() => {});
   }, []);
 
+  const goSearch = () => router.push('/(passenger)/search');
+
   return (
     <View style={s.root}>
-      <ScrollView style={s.scroll} showsVerticalScrollIndicator={false} bounces={false}>
-        {/* Navy header */}
-        <View style={s.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.greet}>{greeting()},</Text>
-            <Text style={s.name}>{name} 👋</Text>
-            <Text style={s.sub}>Where are you headed today?</Text>
-          </View>
-          <TouchableOpacity style={s.avatar} onPress={() => router.push('/(passenger)/account')}>
-            <Text style={s.avatarTxt}>{initials}</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Map hero */}
+      <MapHero
+        points={points}
+        userLocation={location}
+        height={MAP_H}
+        interactive={false}
+        onMenu={() => setDrawerOpen(true)}
+        avatarText={initials}
+        onAvatar={() => router.push('/(passenger)/account')}
+        onPressMap={goSearch}
+      />
 
-        {/* White content */}
-        <View style={s.content}>
+      {/* White sheet over the map */}
+      <View style={s.sheet}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }} bounces={false}>
+          <View style={s.handle} />
+          <Text style={s.heading}>Where are you headed?</Text>
+
           {user?.verification_status !== 'VERIFIED' && (
             <TouchableOpacity style={s.verifyBanner} onPress={() => router.push('/onboarding/verification-status')}>
+              <Feather name={user?.verification_status === 'PENDING' ? 'clock' : 'lock'} size={15} color="#92400E" />
               <Text style={s.verifyTxt}>
                 {user?.verification_status === 'PENDING'
-                  ? '⏳ Verification in progress — you can browse but not book yet.'
-                  : '🔐 Complete verification to start booking rides.'}
+                  ? 'Verification in progress — browse now, book once approved.'
+                  : 'Complete verification to start booking rides.'}
               </Text>
             </TouchableOpacity>
           )}
 
-          {/* Live map */}
-          {points.length > 0 && (
-            <TouchableOpacity style={s.mapCard} activeOpacity={0.9} onPress={() => router.push('/(passenger)/search')}>
-              <LiveMap points={points} userLocation={location} height={180} interactive={false} />
-              <View style={s.mapOverlay}>
-                <Text style={s.mapOverlayTxt}>Tap to plan your ride →</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-
-          {/* Find a shared ride */}
-          <TouchableOpacity style={s.findCard} onPress={() => router.push('/(passenger)/search')} activeOpacity={0.85}>
-            <View style={s.findLeft}>
-              <View style={s.searchIcon}>
-                <Text style={{ fontSize: 16 }}>🔍</Text>
-              </View>
-              <View>
-                <Text style={s.findTitle}>Find a shared ride</Text>
-                <Text style={s.findSub}>Search along the corridor</Text>
-              </View>
-            </View>
-            <Text style={s.findArrow}>→</Text>
-          </TouchableOpacity>
-
-          {/* Ride type cards — same trip, your choice (PCD §4) */}
-          <View style={s.typeRow}>
-            <View style={[s.typeCard, s.typeCardActive]}>
-              <Text style={s.typeIcon}>👥</Text>
-              <Text style={s.typeLabel}>Shared</Text>
-              <Text style={s.typePrice}>GHS 10–15</Text>
-              <Text style={s.typeMeta}>Scheduled · Walk to stop</Text>
-              <Text style={s.typeMetaGreen}>🌿 Saves carbon</Text>
-              <View style={s.bestBadge}><Text style={s.bestBadgeTxt}>BEST VALUE</Text></View>
-            </View>
-            <View style={[s.typeCard, s.typeCardDim]}>
-              <Text style={[s.typeIcon, { opacity: 0.5 }]}>🚗</Text>
-              <Text style={[s.typeLabel, { color: C.muted }]}>Solo</Text>
-              <Text style={[s.typePrice, { color: C.muted }]}>GHS 15+</Text>
-              <Text style={s.typeMeta}>Door-to-door private</Text>
-              <Text style={[s.typeMeta, { color: C.gold, marginTop: 4, fontWeight: '600' }]}>Coming soon</Text>
-            </View>
+          {/* 2×2 adventure grid */}
+          <View style={s.grid}>
+            <ServiceCard emoji="👥" title="Shared Ride" sub="Share & save" badge="BEST VALUE" onPress={goSearch} />
+            <ServiceCard emoji="🚗" title="Solo" sub="Coming soon" dim />
+            <ServiceCard emoji="🗓️" title="Schedule" sub="Book ahead" onPress={goSearch} />
+            <ServiceCard emoji="💸" title="Drive & earn" sub="Become a driver" onPress={() => router.push('/onboarding/become-driver')} />
           </View>
 
+          {/* Where to? pill */}
+          <TouchableOpacity style={s.whereTo} activeOpacity={0.85} onPress={goSearch}>
+            <Feather name="search" size={18} color={C.dark} />
+            <Text style={s.whereToTxt}>Where to?</Text>
+            <View style={s.laterChip}>
+              <Feather name="clock" size={13} color={C.muted} />
+              <Text style={s.laterTxt}>Later</Text>
+            </View>
+          </TouchableOpacity>
+
           {/* Recent destinations */}
-          {recentDests.length > 0 && (
-            <View style={s.section}>
-              <Text style={s.sectionTitle}>Recent destinations</Text>
-              {recentDests.map(dest => (
-                <TouchableOpacity key={dest} style={s.recentRow}
-                  onPress={() => router.push({ pathname: '/(passenger)/search', params: { dest } })}>
-                  <Text style={s.recentDot}>📍</Text>
-                  <Text style={s.recentName}>{dest}</Text>
-                  <Text style={s.recentChev}>›</Text>
-                </TouchableOpacity>
+          {recents.length > 0 && (
+            <View style={s.recents}>
+              {recents.map((d, i) => (
+                <View key={d.name}>
+                  {i > 0 && <View style={s.sep} />}
+                  <LocationRow
+                    icon="clock"
+                    title={d.name}
+                    subtitle={d.area || 'Accra Central ↔ Oyarifa corridor'}
+                    showChevron
+                    onPress={goSearch}
+                  />
+                </View>
               ))}
             </View>
           )}
+        </ScrollView>
+      </View>
 
-          {/* Become a driver */}
-          {!user?.role_flags?.includes('DRIVER') && (
-            <TouchableOpacity style={s.driverCard} onPress={() => router.push('/onboarding/become-driver')}>
-              <Text style={s.driverTitle}>🚗  Earn with WeMove</Text>
-              <Text style={s.driverSub}>Share your commute and earn on trips you already make.</Text>
-              <Text style={s.driverCta}>Become a driver →</Text>
-            </TouchableOpacity>
-          )}
-
-          <View style={{ height: 24 }} />
-        </View>
-      </ScrollView>
       <BottomNav active="home" />
+      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </View>
+  );
+}
+
+function ServiceCard({ emoji, title, sub, onPress, dim, badge }: { emoji: string; title: string; sub: string; onPress?: () => void; dim?: boolean; badge?: string }) {
+  return (
+    <TouchableOpacity style={[s.card, dim && s.cardDim]} activeOpacity={dim ? 1 : 0.8} onPress={onPress} disabled={!onPress}>
+      <Text style={[s.cardEmoji, dim && { opacity: 0.45 }]}>{emoji}</Text>
+      <Text style={[s.cardTitle, dim && { color: C.muted }]}>{title}</Text>
+      <Text style={s.cardSub}>{sub}</Text>
+      {badge ? <View style={s.cardBadge}><Text style={s.cardBadgeTxt}>{badge}</Text></View> : null}
+    </TouchableOpacity>
   );
 }
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.navy },
-  scroll: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'flex-start', padding: 20, paddingTop: 60, paddingBottom: 48 },
-  greet: { fontSize: 14, color: 'rgba(255,255,255,0.65)', marginBottom: 2 },
-  name: { fontSize: 26, fontWeight: '700', color: '#fff' },
-  sub: { fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4 },
-  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center' },
-  avatarTxt: { fontSize: 15, fontWeight: '700', color: C.navy },
-  content: { backgroundColor: C.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, minHeight: 600 },
-  verifyBanner: { backgroundColor: '#FFFBEB', borderRadius: 10, borderLeftWidth: 3, borderLeftColor: C.gold, padding: 12, marginBottom: 16 },
-  verifyTxt: { fontSize: 13, color: '#92400E' },
-  mapCard: { borderRadius: 16, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: C.border },
-  mapOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(13,27,42,0.78)', paddingVertical: 10, paddingHorizontal: 14 },
-  mapOverlayTxt: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  findCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.white, borderRadius: 14, borderWidth: 1, borderColor: C.border, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  findLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  searchIcon: { width: 40, height: 40, borderRadius: 10, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
-  findTitle: { fontSize: 15, fontWeight: '600', color: C.dark },
-  findSub: { fontSize: 12, color: C.muted, marginTop: 1 },
-  findArrow: { fontSize: 18, color: C.dark },
-  typeRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-  typeCard: { flex: 1, borderRadius: 14, borderWidth: 1.5, padding: 14 },
-  typeCardActive: { backgroundColor: C.white, borderColor: C.dark },
-  typeCardDim: { backgroundColor: C.bg, borderColor: C.border },
-  typeIcon: { fontSize: 22, marginBottom: 6 },
-  typeLabel: { fontSize: 15, fontWeight: '700', color: C.dark, marginBottom: 2 },
-  typePrice: { fontSize: 16, fontWeight: '700', color: C.dark, marginBottom: 4 },
-  typeMeta: { fontSize: 11, color: C.muted },
-  typeMetaGreen: { fontSize: 11, color: '#059669', fontWeight: '600', marginTop: 2 },
-  bestBadge: { marginTop: 8, backgroundColor: C.gold, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start' },
-  bestBadgeTxt: { fontSize: 10, fontWeight: '700', color: C.navy },
-  section: { marginBottom: 20 },
-  sectionTitle: { fontSize: 13, fontWeight: '600', color: C.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
-  recentRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border },
-  recentDot: { fontSize: 16, marginRight: 10 },
-  recentName: { flex: 1, fontSize: 15, color: C.dark },
-  recentChev: { fontSize: 20, color: C.muted },
-  driverCard: { backgroundColor: '#0D1B2A', borderRadius: 14, padding: 18, marginTop: 4 },
-  driverTitle: { fontSize: 16, fontWeight: '700', color: '#fff', marginBottom: 6 },
-  driverSub: { fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 12 },
-  driverCta: { fontSize: 14, fontWeight: '600', color: C.gold },
+  sheet: { flex: 1, backgroundColor: C.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, marginTop: -24, paddingHorizontal: 20 },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: C.border, alignSelf: 'center', marginTop: 10, marginBottom: 14 },
+  heading: { fontSize: 26, fontWeight: '800', color: C.dark, marginBottom: 16 },
+  verifyBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.goldBg, borderRadius: 12, borderLeftWidth: 3, borderLeftColor: C.gold, padding: 12, marginBottom: 16 },
+  verifyTxt: { flex: 1, fontSize: 13, color: '#92400E' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },
+  card: { width: '47%', flexGrow: 1, backgroundColor: C.cardBg, borderRadius: 16, padding: 16, minHeight: 104, justifyContent: 'center' },
+  cardDim: { opacity: 0.7 },
+  cardEmoji: { fontSize: 26, marginBottom: 8 },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: C.dark },
+  cardSub: { fontSize: 12, color: C.muted, marginTop: 2 },
+  cardBadge: { position: 'absolute', top: 12, right: 12, backgroundColor: C.gold, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  cardBadgeTxt: { fontSize: 9, fontWeight: '800', color: C.navy },
+  whereTo: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.cardBg, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 16, marginBottom: 8 },
+  whereToTxt: { flex: 1, fontSize: 16, fontWeight: '700', color: C.dark },
+  laterChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.white, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
+  laterTxt: { fontSize: 13, color: C.muted, fontWeight: '500' },
+  recents: { marginTop: 8 },
+  sep: { height: 1, backgroundColor: C.border, marginLeft: 50 },
 });
