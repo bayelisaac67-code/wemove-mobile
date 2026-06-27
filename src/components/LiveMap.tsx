@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 
@@ -18,6 +18,9 @@ type Props = {
   height?: number;
   interactive?: boolean;            // allow drag/zoom (default true)
   rounded?: boolean;
+  fill?: boolean;                   // absolute-fill the parent (full-screen map)
+  picker?: boolean;                 // show a fixed center pin; emit center on move
+  onPinMove?: (lat: number, lng: number) => void; // fires after the map settles in picker mode
 };
 
 const NAVY = '#0D1B2A';
@@ -46,7 +49,8 @@ const TILE_ATTRIBUTION = '&copy; OpenStreetMap &copy; CARTO';
  * Live, interactive map for Expo Go — no Google key, no dev build needed.
  * Renders Leaflet + free Carto tiles inside a WebView. Plots the WeMove
  * corridor, highlights the selected pickup/dropoff, and shows the user's
- * GPS location. Swap the tile layer for Google tiles once we ship a dev build.
+ * GPS location. In picker mode it shows a fixed center pin and reports the
+ * map center back to RN after each pan (for Bolt-style "drop a pin").
  */
 export default function LiveMap({
   points,
@@ -56,7 +60,12 @@ export default function LiveMap({
   height = 220,
   interactive = true,
   rounded = true,
+  fill = false,
+  picker = false,
+  onPinMove,
 }: Props) {
+  const lastSent = useRef<number>(0);
+
   const html = useMemo(() => {
     const pts = (points || [])
       .map(p => ({ name: p.name, lat: Number(p.lat), lng: Number(p.lng), order: p.order_index ?? 0 }))
@@ -67,7 +76,7 @@ export default function LiveMap({
     const toPt = to ? { lat: Number(to.lat), lng: Number(to.lng), name: to.name } : null;
     const user = userLocation && Number.isFinite(userLocation.lat) ? userLocation : null;
 
-    const data = JSON.stringify({ pts, fromPt, toPt, user, interactive });
+    const data = JSON.stringify({ pts, fromPt, toPt, user, interactive, picker });
 
     return `<!DOCTYPE html>
 <html>
@@ -86,10 +95,14 @@ export default function LiveMap({
     .me { width: 16px; height: 16px; border-radius: 50%; background: #2563EB; border: 3px solid #fff;
           box-shadow: 0 0 0 6px rgba(37,99,235,0.25); }
     .leaflet-control-attribution { font-size: 8px; }
+    /* fixed center pin for picker mode */
+    #centerPin { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -100%);
+      z-index: 500; pointer-events: none; font-size: 34px; line-height: 1; }
   </style>
 </head>
 <body>
   <div id="map"></div>
+  <div id="centerPin" style="display:none">📍</div>
   <script>
     var D = ${data};
     var map = L.map('map', {
@@ -137,14 +150,44 @@ export default function LiveMap({
     } else {
       map.setView([5.61, -0.165], 12);
     }
+
+    // picker mode: fixed center pin + report center to RN after each move
+    if (D.picker) {
+      document.getElementById('centerPin').style.display = 'block';
+      function report(){
+        var c = map.getCenter();
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type:'pin', lat:c.lat, lng:c.lng }));
+        }
+      }
+      map.on('moveend', report);
+      setTimeout(report, 600);
+    }
   </script>
 </body>
 </html>`;
-  }, [points, from, to, userLocation, interactive]);
+  }, [points, from, to, userLocation, interactive, picker]);
+
+  function handleMessage(e: any) {
+    if (!onPinMove) return;
+    try {
+      const msg = JSON.parse(e.nativeEvent.data);
+      if (msg.type === 'pin' && Number.isFinite(msg.lat)) {
+        const now = Date.now();
+        if (now - lastSent.current < 250) return; // light throttle
+        lastSent.current = now;
+        onPinMove(msg.lat, msg.lng);
+      }
+    } catch {}
+  }
 
   return (
     <View
-      style={[styles.wrap, { height }, rounded && styles.rounded]}
+      style={[
+        styles.wrap,
+        fill ? StyleSheet.absoluteFillObject : { height },
+        rounded && styles.rounded,
+      ]}
       pointerEvents={interactive ? 'auto' : 'none'}
     >
       <WebView
@@ -153,6 +196,7 @@ export default function LiveMap({
         style={styles.web}
         scrollEnabled={false}
         startInLoadingState
+        onMessage={handleMessage}
         renderLoading={() => (
           <View style={styles.loading}>
             <ActivityIndicator color={GOLD} />
