@@ -37,29 +37,51 @@ export default function AccountScreen() {
 
   const initials = (user?.full_name || user?.preferred_name || '?').split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase();
   const isVerified = user?.verification_status === 'VERIFIED';
+  const soon = (msg = 'This feature is on the way.') => Alert.alert('Coming soon', msg);
 
   const sections: { title: string; items: MenuItem[] }[] = [
     {
       title: 'Account',
       items: [
-        { icon: 'user', label: 'Edit Profile', onPress: () => Alert.alert('Coming soon', 'Profile editing is on the way.') },
-        { icon: 'shield', label: 'Verification Status', onPress: () => router.push('/onboarding/verification-status' as any) },
-        { icon: 'bell', label: 'Notifications', onPress: () => Alert.alert('Coming soon') },
+        { icon: 'user', label: 'Personal info', onPress: () => soon('Edit your name, photo and details soon.') },
+        { icon: 'heart', label: 'Family profile', onPress: () => soon('Add family members and book for them soon.') },
+        { icon: 'shield', label: 'Verification status', onPress: () => router.push('/onboarding/verification-status' as any) },
+        { icon: 'lock', label: 'Login & security', onPress: () => soon('Manage your phone number and sessions soon.') },
+        { icon: 'eye-off', label: 'Privacy', onPress: () => soon('Control your data and privacy settings soon.') },
+      ],
+    },
+    {
+      title: 'Saved places',
+      items: [
+        { icon: 'home', label: 'Add home address', onPress: () => soon('Save your home for one-tap booking soon.') },
+        { icon: 'briefcase', label: 'Add work address', onPress: () => soon('Save your workplace for one-tap booking soon.') },
+        { icon: 'plus', label: 'Add a place', onPress: () => soon('Save your favourite spots soon.') },
       ],
     },
     {
       title: 'Ride',
       items: [
-        { icon: 'clock', label: 'Trip History', onPress: () => router.push('/(passenger)/history') },
-        { icon: 'star', label: 'Rate & Reviews', onPress: () => Alert.alert('Coming soon') },
+        { icon: 'clock', label: 'Trip history', onPress: () => router.push('/(passenger)/history') },
+        { icon: 'credit-card', label: 'Payment', onPress: () => soon('Mobile Money, GhanaPay and cash options soon.') },
+        { icon: 'tag', label: 'Promotions', onPress: () => soon('Promo codes are coming soon.') },
+        { icon: 'star', label: 'Rate & reviews', onPress: () => soon() },
+      ],
+    },
+    {
+      title: 'Preferences',
+      items: [
+        { icon: 'globe', label: 'Language', onPress: () => soon('English · more languages soon.') },
+        { icon: 'volume-2', label: 'Communication preferences', onPress: () => soon('Choose how we notify you soon.') },
+        { icon: 'calendar', label: 'Calendars', onPress: () => soon('Sync rides to your calendar soon.') },
       ],
     },
     {
       title: 'More',
       items: [
-        { icon: 'help-circle', label: 'Help & Support', onPress: () => Alert.alert('Support', 'Email support@wemove.app for help.') },
-        { icon: 'info', label: 'About WeMove', onPress: () => Alert.alert('WeMove', 'Premium shared rides along the Accra Central ↔ Oyarifa corridor.') },
-        { icon: 'log-out', label: 'Sign Out', danger: true, onPress: () => Alert.alert('Sign out?', '', [{ text: 'Cancel' }, { text: 'Sign out', style: 'destructive', onPress: () => { logout(); router.replace('/'); } }]) },
+        { icon: 'help-circle', label: 'Help & support', onPress: () => Alert.alert('Support', 'Email support@wemove.app for help.') },
+        { icon: 'info', label: 'About WeMove', onPress: () => Alert.alert('WeMove', 'Premium shared rides along the Accra Central ↔ Oyarifa corridor.\n\nv1.0 · Pilot') },
+        { icon: 'log-out', label: 'Log out', danger: true, onPress: () => Alert.alert('Log out?', '', [{ text: 'Cancel' }, { text: 'Log out', style: 'destructive', onPress: () => { logout(); router.replace('/'); } }]) },
+        { icon: 'trash-2', label: 'Delete account', danger: true, onPress: () => Alert.alert('Delete account?', 'This will permanently remove your WeMove account. To proceed, email support@wemove.app and we will action it.', [{ text: 'Cancel' }, { text: 'Email support', style: 'destructive', onPress: () => soon('Account deletion will be self-service soon. For now, email support@wemove.app.') }]) },
       ],
     },
   ];

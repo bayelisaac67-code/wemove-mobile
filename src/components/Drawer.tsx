@@ -39,12 +39,14 @@ export default function Drawer({ open, onClose }: { open: boolean; onClose: () =
   const soon = (msg: string) => go(() => Alert.alert('Coming soon', msg));
 
   const items: Item[] = [
-    { icon: 'credit-card', label: 'Payment', onPress: () => soon('Payment methods are on the way.') },
+    { icon: 'credit-card', label: 'Payment', onPress: () => soon('Mobile Money, GhanaPay and cash options are on the way.') },
     { icon: 'tag', label: 'Promotions', sub: 'Enter promo code', onPress: () => soon('Promo codes are coming soon.') },
     { icon: 'clock', label: 'My Rides', onPress: () => go(() => router.push('/(passenger)/history')) },
-    { icon: 'shield', label: 'Safety', onPress: () => soon('Safety tools (SOS, trusted contacts) are coming soon.') },
+    { icon: 'shield', label: 'Safety', onPress: () => soon('SOS, trip sharing and trusted contacts are coming soon.') },
+    { icon: 'briefcase', label: 'Expense your rides', onPress: () => soon('Ride receipts for work expenses are coming soon.') },
+    { icon: 'user', label: 'My account', onPress: () => go(() => router.push('/(passenger)/account')) },
     { icon: 'help-circle', label: 'Support', onPress: () => go(() => Alert.alert('Support', 'Email support@wemove.app for help.')) },
-    { icon: 'info', label: 'About', onPress: () => go(() => Alert.alert('WeMove', 'Premium shared rides along the Accra Central ↔ Oyarifa corridor.')) },
+    { icon: 'info', label: 'About', onPress: () => go(() => Alert.alert('WeMove', 'Premium shared rides along the Accra Central ↔ Oyarifa corridor.\n\nv1.0 · Pilot')) },
   ];
 
   if (!open) {
