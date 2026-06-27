@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +13,10 @@ import DraggableSheet from '../../src/components/DraggableSheet';
 import { useUserLocation } from '../../src/hooks/useUserLocation';
 
 const CORRIDOR_ID = 'a1b2c3d4-0000-0000-0000-000000000001';
-const NAV_H = 64; // bottom tab bar height (sheet sits above it)
+const NAV_H = 64;                              // bottom tab bar height (+ safe area added below)
+const H = Dimensions.get('window').height;
+const PEEK = 230;                              // collapsed sheet height
+const EXPANDED = Math.round(H * 0.72);         // expanded sheet height
 
 const C = {
   navy: '#0D1B2A', gold: '#F5B800', white: '#FFFFFF',
@@ -32,6 +35,16 @@ export default function PassengerHome() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { location, request: requestLocation } = useUserLocation();
   const initials = (user?.preferred_name || user?.full_name || 'W').slice(0, 2).toUpperCase();
+
+  // Shared drag value (0 = expanded, RANGE = collapsed). Drives both the sheet
+  // and the map height so the map shrinks as the sheet rises.
+  const navTotal = NAV_H + (insets.bottom || 12);
+  const RANGE = Math.max(1, EXPANDED - PEEK);
+  const translateY = useRef(new Animated.Value(RANGE)).current;
+  // map fills from the top down to the sheet's top edge:
+  //   mapHeight = translateY + (H - navTotal - EXPANDED)
+  // collapsed (translateY=RANGE) → H - navTotal - PEEK (tall);  expanded (0) → H - navTotal - EXPANDED (short)
+  const mapHeight = Animated.add(translateY, H - navTotal - EXPANDED);
 
   useEffect(() => {
     api.get('/users/me/trips').then(r => {
@@ -57,19 +70,13 @@ export default function PassengerHome() {
 
   const goSearch = () => router.push('/(passenger)/search');
   const top = (insets.top || 12) + 4;
-  const navTotal = NAV_H + (insets.bottom || 12);
 
   return (
     <View style={s.root}>
-      {/* Full-screen interactive map behind everything */}
-      <LiveMap
-        points={points}
-        userLocation={location}
-        height={undefined as any}
-        fill
-        interactive
-        rounded={false}
-      />
+      {/* Map fills the top; its height shrinks/grows with the sheet drag */}
+      <Animated.View style={[s.mapWrap, { height: mapHeight }]}>
+        <LiveMap points={points} userLocation={location} fill interactive rounded={false} />
+      </Animated.View>
 
       {/* Floating controls over the map */}
       <TouchableOpacity style={[s.fab, { top, left: 16 }]} activeOpacity={0.85} onPress={() => setDrawerOpen(true)}>
@@ -81,8 +88,10 @@ export default function PassengerHome() {
 
       {/* Draggable bottom sheet over the map, above the tab bar */}
       <DraggableSheet
-        peekHeight={210}
+        peekHeight={PEEK}
+        expandedHeight={EXPANDED}
         bottomInset={navTotal}
+        translateY={translateY}
         header={
           <>
             <Text style={s.heading}>Where are you headed?</Text>
@@ -136,7 +145,11 @@ export default function PassengerHome() {
         )}
       </DraggableSheet>
 
-      <BottomNav active="home" />
+      {/* Bottom tab bar — pinned to the very bottom */}
+      <View style={s.navWrap}>
+        <BottomNav active="home" />
+      </View>
+
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </View>
   );
@@ -155,6 +168,8 @@ function ServiceCard({ emoji, title, sub, onPress, dim, badge }: { emoji: string
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
+  mapWrap: { width: '100%', backgroundColor: '#EAEAEA' },
+  navWrap: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   fab: {
     position: 'absolute', width: 44, height: 44, borderRadius: 22,
     backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center',

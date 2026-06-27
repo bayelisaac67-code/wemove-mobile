@@ -151,6 +151,10 @@ export default function LiveMap({
       map.setView([5.61, -0.165], 12);
     }
 
+    // Keep tiles filling the view when the RN container resizes (e.g. the home
+    // sheet dragging shrinks/grows the map height each frame).
+    window.addEventListener('resize', function(){ if (map) map.invalidateSize(); });
+
     // picker mode: fixed center pin + report center to RN after each move
     if (D.picker) {
       document.getElementById('centerPin').style.display = 'block';
